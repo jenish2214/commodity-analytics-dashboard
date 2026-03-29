@@ -4,6 +4,36 @@
   min-height: 100dvh;
   background: var(--color-bg);
 }
+/* Mobile / tablet: opens sidebar overlay; hidden on desktop (see media query below) */
+.ca-sidebar-toggle {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  background: var(--color-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.ca-sidebar-toggle:hover {
+  background: #132c46;
+}
+
+@media (min-width: 1024px) {
+  .ca-sidebar-toggle {
+    display: none;
+  }
+}
 
 .ca-sidebar {
   width: var(--sidebar-width);
@@ -20,6 +50,13 @@
   z-index: 40;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   transition: transform 200ms ease;
+}
+
+@media (min-width: 1024px) {
+  .ca-sidebar {
+    position: sticky;
+    transform: none;
+  }
 }
 
 .ca-sidebar__logo {
@@ -67,6 +104,12 @@
   position: sticky;
   top: 0;
   z-index: 30;
+}
+
+@media (max-width: 1023px) {
+  .ca-topbar {
+    padding-left: 4rem;
+  }
 }
 
 .ca-topbar__search {
@@ -512,7 +555,7 @@
   color: var(--color-primary);
 }
 
-/* Hamburger / overlay */
+/* Top bar menu removed: primary toggle lives in Sidebar (.ca-sidebar-toggle) */
 .ca-menu-btn {
   display: none;
   margin-right: 0.5rem;
@@ -525,17 +568,14 @@
   z-index: 35;
 }
 
-/* Tablet: hide sidebar, show menu */
-@media (max-width: 1024px) {
-  .ca-menu-btn {
-    display: inline-flex;
-  }
-
+/* Mobile & tablet: sidebar slides in as overlay; desktop unchanged (see .ca-sidebar min-width 1024 rules) */
+@media (max-width: 1023px) {
   .ca-sidebar {
     position: fixed;
     left: 0;
     top: 0;
     transform: translateX(-102%);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
   }
 
   .ca-sidebar[data-open="true"] {
@@ -544,14 +584,6 @@
 }
 
 @media (max-width: 640px) {
-  .ca-sidebar {
-    display: none;
-  }
-
-  .ca-menu-btn {
-    display: none;
-  }
-
   .ca-bottom-nav {
     display: flex;
   }

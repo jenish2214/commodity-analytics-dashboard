@@ -28,13 +28,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
       <Sidebar
         open={sidebarOpen}
+        onToggle={() => setSidebarOpen((o) => !o)}
         onNavigate={() => setSidebarOpen(false)}
       />
       <div className="ca-main">
-        <TopNavbar onMenuClick={() => setSidebarOpen((o) => !o)} />
-        {children}
-        <BottomNav />
+        <TopNavbar />
+          {children}
+          <BottomNav />
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
