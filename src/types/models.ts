@@ -83,19 +83,6 @@ export type NewsArticle = {
   excerpt: string;
 };
 
-export type ReportItem = {
-  id: string;
-  title: string;
-  description: string;
-};
-
-export type DashboardFont =
-  | "Inter"
-  | "Roboto"
-  | "Poppins"
-  | "Playfair Display"
-  | "JetBrains Mono";
-
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "INR" | "JPY";
 
 export type DashboardNotifications = {

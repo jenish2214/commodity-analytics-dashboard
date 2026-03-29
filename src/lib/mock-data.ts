@@ -7,7 +7,6 @@ import type {
   MarketRow,
   NewsArticle,
   PortfolioHolding,
-  ReportItem,
   TimeRange,
 } from "@/types/models";
 
@@ -255,24 +254,6 @@ export const newsArticles: NewsArticle[] = [
     source: "Financial Times",
     publishedAt: "Yesterday",
     excerpt: "Electrification projects lift medium-term consumption view.",
-  },
-];
-
-export const reportItems: ReportItem[] = [
-  {
-    id: "r1",
-    title: "Monthly portfolio report",
-    description: "Positions, PnL, and risk metrics for the prior month.",
-  },
-  {
-    id: "r2",
-    title: "Commodity performance report",
-    description: "Benchmark comparisons and factor attribution by sector.",
-  },
-  {
-    id: "r3",
-    title: "AI market prediction report",
-    description: "Model outputs, confidence intervals, and signal history.",
   },
 ];
 

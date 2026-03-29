@@ -6,6 +6,23 @@
   box-sizing: border-box;
 }
 
+/* Scrollbar width detection */
+:root {
+  --scrollbar-width: 0px;
+}
+
+@supports (scrollbar-width: thin) {
+  :root {
+    --scrollbar-width: 8px;
+  }
+}
+
+@media (hover: hover) {
+  :root {
+    --scrollbar-width: 12px;
+  }
+}
+
 html {
   transition: all 0.3s ease;
 }
@@ -18,11 +35,39 @@ body {
 
 body {
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
   font-weight: 400;
   color: var(--text-secondary);
   background: var(--bg-primary);
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 h1,

@@ -1,16 +1,9 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { useUserStore } from "@/store/userStore";
-import type { CurrencyCode, DashboardFont } from "@/types/models";
-
-const FONT_OPTIONS: DashboardFont[] = [
-  "Inter",
-  "Roboto",
-  "Poppins",
-  "Playfair Display",
-  "JetBrains Mono",
-];
+import type { CurrencyCode } from "@/types/models";
 
 const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
   { code: "USD", label: "USD ($)" },
@@ -28,10 +21,11 @@ type Props = {
 export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const setSearchQuery = useMarketDataStore((s) => s.setSearchQuery);
+  const lastLiveUpdate = useMarketDataStore((s) => s.lastLiveUpdate);
   const name = useUserStore((s) => s.name);
-  const font = useUserStore((s) => s.font);
+  const theme = useUserStore((s) => s.theme);
   const currency = useUserStore((s) => s.currency);
-  const setFont = useUserStore((s) => s.setFont);
+  const setTheme = useUserStore((s) => s.setTheme);
   const setCurrency = useUserStore((s) => s.setCurrency);
 
   const initials = name
@@ -79,21 +73,6 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
       </label>
       <div className="ca-topbar__actions">
         <label className="ca-topbar__select-wrap">
-          <span className="sr-only">Font</span>
-          <select
-            className="ca-topbar__select"
-            value={font}
-            onChange={(e) => setFont(e.target.value as DashboardFont)}
-            aria-label="Font family"
-          >
-            {FONT_OPTIONS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ca-topbar__select-wrap">
           <span className="sr-only">Currency</span>
           <select
             className="ca-topbar__select"
@@ -108,9 +87,25 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
             ))}
           </select>
         </label>
+        <button
+          type="button"
+          className="ca-icon-btn"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          style={{ marginRight: "8px" }}
+        >
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
         <div className="ca-market-pill" role="status">
-          <span className="ca-market-pill__dot" aria-hidden />
-          Markets open
+          <span 
+            className="ca-market-pill__dot" 
+            aria-hidden 
+            style={{
+              backgroundColor: lastLiveUpdate > 0 ? "var(--gain)" : undefined,
+              animation: lastLiveUpdate > 0 ? "pulse 2s infinite" : undefined,
+            }}
+          />
+          {lastLiveUpdate > 0 ? "Live prices" : "Markets open"}
         </div>
         <button type="button" className="ca-icon-btn" aria-label="Notifications">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>

@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type {
   CurrencyCode,
-  DashboardFont,
   DashboardNotifications,
 } from "@/types/models";
 
@@ -18,7 +17,7 @@ function currencySymbolFor(code: CurrencyCode): string {
   return CURRENCY_SYMBOL[code];
 }
 
-function applyThemeToDom(theme: "light" | "dark"): void {
+function applyThemeToDom(theme: "light" | "dark" | "navy"): void {
   if (typeof document === "undefined") return;
   document.documentElement.dataset.theme = theme;
   try {
@@ -26,11 +25,19 @@ function applyThemeToDom(theme: "light" | "dark"): void {
   } catch {
     /* ignore */
   }
+  
+  // Apply Poppins font
+  const link = document.getElementById("ca-font-link") as HTMLLinkElement
+    ?? Object.assign(document.createElement("link"), {
+         id: "ca-font-link", rel: "stylesheet"
+       })
+  link.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+  if (!link.parentNode) document.head.appendChild(link)
+  document.documentElement.style.fontFamily = "'Poppins', sans-serif"
 }
 
 function syncAuxiliaryStorage(state: {
-  theme: "light" | "dark";
-  font: DashboardFont;
+  theme: "light" | "dark" | "navy";
   currency: CurrencyCode;
   name: string;
   email: string;
@@ -38,7 +45,6 @@ function syncAuxiliaryStorage(state: {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem("dashboard_theme", state.theme);
-    localStorage.setItem("dashboard_font", state.font);
     localStorage.setItem("dashboard_currency", state.currency);
     localStorage.setItem(
       "dashboard_profile",
@@ -52,8 +58,7 @@ function syncAuxiliaryStorage(state: {
 type UserPersistState = {
   name: string;
   email: string;
-  theme: "light" | "dark";
-  font: DashboardFont;
+  theme: "light" | "dark" | "navy";
   currency: CurrencyCode;
   currencySymbol: string;
   notifications: DashboardNotifications;
@@ -61,8 +66,7 @@ type UserPersistState = {
 };
 
 type UserActions = {
-  setTheme: (theme: "light" | "dark") => void;
-  setFont: (font: DashboardFont) => void;
+  setTheme: (theme: "light" | "dark" | "navy") => void;
   setCurrency: (currency: CurrencyCode) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -86,7 +90,6 @@ export const useUserStore = create<UserStore>()(
       name: "Alex Morgan",
       email: "alex@example.com",
       theme: "dark",
-      font: "Inter",
       currency: "USD",
       currencySymbol: currencySymbolFor("USD"),
       notifications: { ...defaultNotifications },
@@ -96,16 +99,6 @@ export const useUserStore = create<UserStore>()(
         set({ theme });
         applyThemeToDom(theme);
         syncAuxiliaryStorage({ ...get(), theme });
-      },
-
-      setFont: (font) => {
-        set({ font });
-        try {
-          localStorage.setItem("dashboard_font", font);
-        } catch {
-          /* ignore */
-        }
-        syncAuxiliaryStorage(get());
       },
 
       setCurrency: (currency) => {
@@ -150,7 +143,6 @@ export const useUserStore = create<UserStore>()(
         try {
           localStorage.removeItem("dashboard_settings");
           localStorage.removeItem("dashboard_theme");
-          localStorage.removeItem("dashboard_font");
           localStorage.removeItem("dashboard_currency");
           localStorage.removeItem("dashboard_profile");
           localStorage.removeItem("dashboard_portfolio");
@@ -170,7 +162,6 @@ export const useUserStore = create<UserStore>()(
         name: state.name,
         email: state.email,
         theme: state.theme,
-        font: state.font,
         currency: state.currency,
         currencySymbol: state.currencySymbol,
         notifications: state.notifications,
