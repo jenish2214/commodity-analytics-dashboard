@@ -2,17 +2,39 @@
 
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { useUserStore } from "@/store/userStore";
+import type { CurrencyCode, DashboardFont } from "@/types/models";
+
+const FONT_OPTIONS: DashboardFont[] = [
+  "Inter",
+  "Roboto",
+  "Poppins",
+  "Playfair Display",
+  "JetBrains Mono",
+];
+
+const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
+  { code: "USD", label: "USD ($)" },
+  { code: "EUR", label: "EUR (€)" },
+  { code: "GBP", label: "GBP (£)" },
+  { code: "INR", label: "INR (₹)" },
+  { code: "JPY", label: "JPY (¥)" },
+];
 
 type Props = {
   onMenuClick?: () => void;
+  menuOpen?: boolean;
 };
 
-export function TopNavbar({ onMenuClick }: Props) {
+export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const setSearchQuery = useMarketDataStore((s) => s.setSearchQuery);
-  const profile = useUserStore((s) => s.profile);
+  const name = useUserStore((s) => s.name);
+  const font = useUserStore((s) => s.font);
+  const currency = useUserStore((s) => s.currency);
+  const setFont = useUserStore((s) => s.setFont);
+  const setCurrency = useUserStore((s) => s.setCurrency);
 
-  const initials = profile.name
+  const initials = name
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -25,7 +47,8 @@ export function TopNavbar({ onMenuClick }: Props) {
         <button
           type="button"
           className="ca-icon-btn ca-menu-btn"
-          aria-label="Open navigation"
+          aria-label="Toggle sidebar"
+          aria-expanded={menuOpen ?? false}
           onClick={onMenuClick}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -55,6 +78,36 @@ export function TopNavbar({ onMenuClick }: Props) {
         />
       </label>
       <div className="ca-topbar__actions">
+        <label className="ca-topbar__select-wrap">
+          <span className="sr-only">Font</span>
+          <select
+            className="ca-topbar__select"
+            value={font}
+            onChange={(e) => setFont(e.target.value as DashboardFont)}
+            aria-label="Font family"
+          >
+            {FONT_OPTIONS.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ca-topbar__select-wrap">
+          <span className="sr-only">Currency</span>
+          <select
+            className="ca-topbar__select"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+            aria-label="Currency"
+          >
+            {CURRENCY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="ca-market-pill" role="status">
           <span className="ca-market-pill__dot" aria-hidden />
           Markets open

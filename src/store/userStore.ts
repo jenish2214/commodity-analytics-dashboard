@@ -1,106 +1,202 @@
 import { create } from "zustand";
-import type { NotificationPrefs, UserProfile } from "@/types/models";
-import { defaultUser } from "@/lib/mock-data";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type {
+  CurrencyCode,
+  DashboardFont,
+  DashboardNotifications,
+} from "@/types/models";
 
-export type ThemeMode = "light" | "dark";
-
-type UserState = {
-  profile: UserProfile;
-  theme: ThemeMode;
-  notifications: NotificationPrefs;
-  hydrated: boolean;
-  setTheme: (theme: ThemeMode) => void;
-  setProfile: (profile: Partial<UserProfile>) => void;
-  setNotifications: (prefs: Partial<NotificationPrefs>) => void;
-  hydrateFromStorage: () => void;
+const CURRENCY_SYMBOL: Record<CurrencyCode, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  INR: "₹",
+  JPY: "¥",
 };
 
-const STORAGE_KEY = "ca-dashboard-user";
+function currencySymbolFor(code: CurrencyCode): string {
+  return CURRENCY_SYMBOL[code];
+}
 
-export const useUserStore = create<UserState>((set, get) => ({
-  profile: {
-    name: defaultUser.name,
-    email: defaultUser.email,
-    plan: defaultUser.plan,
-  },
-  theme: "light",
-  notifications: {
-    emailAlerts: true,
-    priceAlerts: true,
-  },
-  hydrated: false,
-  setTheme: (theme) => {
-    set({ theme });
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.theme = theme;
-    }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ ...parsed, theme })
-      );
-    } catch {
-      /* ignore */
-    }
-  },
-  setProfile: (profile) =>
-    set((s) => ({
-      profile: { ...s.profile, ...profile },
-    })),
-  setNotifications: (prefs) => {
-    set((s) => {
-      const next = { ...s.notifications, ...prefs };
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            ...parsed,
-            notifications: next,
-            theme: s.theme,
-            profile: s.profile,
-          })
-        );
-      } catch {
-        /* ignore */
-      }
-      return { notifications: next };
-    });
-  },
-  hydrateFromStorage: () => {
-    if (get().hydrated) return;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        set({ hydrated: true });
-        if (typeof document !== "undefined") {
-          document.documentElement.dataset.theme = get().theme;
+function applyThemeToDom(theme: "light" | "dark"): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem("dashboard_theme", theme);
+  } catch {
+    /* ignore */
+  }
+}
+
+function syncAuxiliaryStorage(state: {
+  theme: "light" | "dark";
+  font: DashboardFont;
+  currency: CurrencyCode;
+  name: string;
+  email: string;
+}): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("dashboard_theme", state.theme);
+    localStorage.setItem("dashboard_font", state.font);
+    localStorage.setItem("dashboard_currency", state.currency);
+    localStorage.setItem(
+      "dashboard_profile",
+      JSON.stringify({ name: state.name, email: state.email })
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+type UserPersistState = {
+  name: string;
+  email: string;
+  theme: "light" | "dark";
+  font: DashboardFont;
+  currency: CurrencyCode;
+  currencySymbol: string;
+  notifications: DashboardNotifications;
+  sidebarOpen: boolean;
+};
+
+type UserActions = {
+  setTheme: (theme: "light" | "dark") => void;
+  setFont: (font: DashboardFont) => void;
+  setCurrency: (currency: CurrencyCode) => void;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+  updateProfile: (p: { name?: string; email?: string }) => void;
+  toggleNotification: (key: keyof DashboardNotifications) => void;
+  initFromStorage: () => void;
+  resetAllSettings: () => void;
+};
+
+export type UserStore = UserPersistState & UserActions;
+
+const defaultNotifications: DashboardNotifications = {
+  email: true,
+  push: false,
+  priceAlerts: true,
+};
+
+export const useUserStore = create<UserStore>()(
+  persist(
+    (set, get) => ({
+      name: "Alex Morgan",
+      email: "alex@example.com",
+      theme: "dark",
+      font: "Inter",
+      currency: "USD",
+      currencySymbol: currencySymbolFor("USD"),
+      notifications: { ...defaultNotifications },
+      sidebarOpen: true,
+
+      setTheme: (theme) => {
+        set({ theme });
+        applyThemeToDom(theme);
+        syncAuxiliaryStorage({ ...get(), theme });
+      },
+
+      setFont: (font) => {
+        set({ font });
+        try {
+          localStorage.setItem("dashboard_font", font);
+        } catch {
+          /* ignore */
         }
-        return;
-      }
-      const data = JSON.parse(raw) as {
-        theme?: ThemeMode;
-        profile?: UserProfile;
-        notifications?: NotificationPrefs;
-      };
-      set({
-        theme: data.theme ?? "light",
-        profile: data.profile
-          ? { ...get().profile, ...data.profile }
-          : get().profile,
-        notifications: data.notifications
-          ? { ...get().notifications, ...data.notifications }
-          : get().notifications,
-        hydrated: true,
-      });
-      if (typeof document !== "undefined") {
-        document.documentElement.dataset.theme = data.theme ?? "light";
-      }
-    } catch {
-      set({ hydrated: true });
+        syncAuxiliaryStorage(get());
+      },
+
+      setCurrency: (currency) => {
+        const currencySymbol = currencySymbolFor(currency);
+        set({ currency, currencySymbol });
+        try {
+          localStorage.setItem("dashboard_currency", currency);
+        } catch {
+          /* ignore */
+        }
+        syncAuxiliaryStorage(get());
+      },
+
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+
+      updateProfile: (p) => {
+        set((s) => ({
+          name: p.name ?? s.name,
+          email: p.email ?? s.email,
+        }));
+        syncAuxiliaryStorage(get());
+      },
+
+      toggleNotification: (key) => {
+        set((s) => ({
+          notifications: {
+            ...s.notifications,
+            [key]: !s.notifications[key],
+          },
+        }));
+      },
+
+      initFromStorage: () => {
+        const st = get();
+        applyThemeToDom(st.theme);
+        syncAuxiliaryStorage(st);
+      },
+
+      resetAllSettings: () => {
+        try {
+          localStorage.removeItem("dashboard_settings");
+          localStorage.removeItem("dashboard_theme");
+          localStorage.removeItem("dashboard_font");
+          localStorage.removeItem("dashboard_currency");
+          localStorage.removeItem("dashboard_profile");
+          localStorage.removeItem("dashboard_portfolio");
+          localStorage.removeItem("ca-dashboard-user");
+        } catch {
+          /* ignore */
+        }
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      },
+    }),
+    {
+      name: "dashboard_settings",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        name: state.name,
+        email: state.email,
+        theme: state.theme,
+        font: state.font,
+        currency: state.currency,
+        currencySymbol: state.currencySymbol,
+        notifications: state.notifications,
+        sidebarOpen: state.sidebarOpen,
+      }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<UserPersistState> | undefined;
+        if (!p || typeof p !== "object") return current;
+        const currency = p.currency ?? current.currency;
+        return {
+          ...current,
+          ...p,
+          currency,
+          currencySymbol: currencySymbolFor(currency as CurrencyCode),
+          notifications: {
+            ...current.notifications,
+            ...(p.notifications ?? {}),
+          },
+        };
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          applyThemeToDom(state.theme);
+          syncAuxiliaryStorage(state);
+        }
+      },
     }
-  },
-}));
+  )
+);

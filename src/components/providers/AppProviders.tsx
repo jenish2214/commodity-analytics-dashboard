@@ -1,22 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
+import { ThemeFontSync } from "@/components/providers/ThemeFontSync";
 import { useAiInsightsStore } from "@/store/aiInsightsStore";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { usePortfolioStore } from "@/store/portfolioStore";
-import { useUserStore } from "@/store/userStore";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
-  const hydrateFromStorage = useUserStore((s) => s.hydrateFromStorage);
   const fetchMarket = useMarketDataStore((s) => s.fetchMarket);
   const fetchChart = useMarketDataStore((s) => s.fetchChart);
   const applyPriceTick = useMarketDataStore((s) => s.applyPriceTick);
   const fetchPortfolio = usePortfolioStore((s) => s.fetchPortfolio);
   const fetchInsights = useAiInsightsStore((s) => s.fetchInsights);
-
-  useEffect(() => {
-    hydrateFromStorage();
-  }, [hydrateFromStorage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,5 +36,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return () => window.clearInterval(id);
   }, [applyPriceTick]);
 
-  return <>{children}</>;
+  return (
+    <>
+      <ThemeFontSync />
+      {children}
+    </>
+  );
 }
