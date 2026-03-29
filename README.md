@@ -89,18 +89,137 @@ Then open **http://localhost:3000** again. `npm run start` runs the optimized ve
 
 ---
 
-## Folder map (simple)
+## Project folder structure
 
-You do not need to edit these to use the app. This is only so you know where things live if someone asks.
+This section shows **where files live** and **which part of the app** they belong to. You do not need to edit these files just to use the website—this is a map for your team.
 
-| Location | What it is for (in simple terms) |
-|----------|-----------------------------------|
-| `src/app` | **Pages** and **URLs** (each screen of the website). |
-| `src/components` | **Reusable pieces** of the interface (menus, cards, charts). |
-| `src/styles` | **Colors and layout** rules (no Tailwind; custom CSS files). |
-| `src/store` | **In-memory settings** while you use the app (theme, market data, etc.). |
-| `src/lib` | **Sample data** and helpers used by the demo. |
-| `src/app/api` | **Small web endpoints** that return sample JSON or PDF files for downloads. |
+### Top-level (project root)
+
+| File / folder | Role in simple terms |
+|---------------|----------------------|
+| `package.json` | Lists app dependencies and shortcuts like `npm run dev`. |
+| `next.config.mjs` | Next.js settings for building and running the project. |
+| `tsconfig.json` | TypeScript compiler options (for developers). |
+| `README.md` | This guide. |
+| `src/` | **All application source code** lives here. |
+
+### Full tree (`src/` and main app files)
+
+```text
+src/
+├── app/
+│   ├── layout.tsx                 ← Root layout: fonts (Inter), global CSS
+│   ├── (dashboard)/
+│   │   ├── layout.tsx             ← Wraps every page: sidebar, top bar, bottom nav, data loading
+│   │   ├── page.tsx               ← URL: /                    → Dashboard (home)
+│   │   ├── commodities/
+│   │   │   ├── page.tsx           ← URL: /commodities
+│   │   │   └── [symbol]/
+│   │   │       └── page.tsx       ← URL: /commodities/gold (and other symbols)
+│   │   ├── portfolio/
+│   │   │   └── page.tsx           ← URL: /portfolio
+│   │   ├── ai-insights/
+│   │   │   └── page.tsx           ← URL: /ai-insights
+│   │   ├── market-news/
+│   │   │   └── page.tsx           ← URL: /market-news
+│   │   ├── reports/
+│   │   │   └── page.tsx           ← URL: /reports
+│   │   └── settings/
+│   │       └── page.tsx           ← URL: /settings
+│   └── api/                       ← Backend-style URLs the browser can call (demo data)
+│       ├── commodities/route.ts   ← GET /api/commodities (+ optional chart query)
+│       ├── portfolio/route.ts     ← GET /api/portfolio
+│       ├── ai-insights/route.ts   ← GET /api/ai-insights
+│       ├── news/route.ts          ← GET /api/news
+│       └── reports/
+│           └── pdf/route.ts       ← GET /api/reports/pdf (download PDF)
+│
+├── components/
+│   ├── layout/
+│   │   ├── AppShell.tsx           ← Overall shell: sidebar + main column + backdrop (tablet)
+│   │   ├── Sidebar.tsx            ← Left navigation (all sections)
+│   │   ├── TopNavbar.tsx          ← Top bar: search, notifications, avatar, market status
+│   │   └── BottomNav.tsx          ← Mobile bottom navigation
+│   ├── providers/
+│   │   └── AppProviders.tsx       ← Loads data on startup, live price tick, connects stores
+│   ├── views/                     ← One file per main screen (page content)
+│   │   ├── DashboardView.tsx       ← Dashboard: stats, chart, table
+│   │   ├── CommoditiesView.tsx     ← Commodities page
+│   │   ├── CommodityDetailView.tsx ← Single commodity detail
+│   │   ├── PortfolioView.tsx       ← Portfolio holdings + pie chart
+│   │   ├── AiInsightsView.tsx      ← AI Insights page
+│   │   ├── MarketNewsView.tsx      ← Market News page
+│   │   ├── ReportsView.tsx         ← Reports + download buttons
+│   │   └── SettingsView.tsx       ← Settings form + theme + notifications
+│   ├── StatCard.tsx               ← Reusable summary number cards (dashboard stats)
+│   ├── ChartCard.tsx              ← Commodity price line chart + filters (Recharts)
+│   ├── CommodityTable.tsx         ← Market table (commodity, price, change, signal…)
+│   ├── CommodityDetailCharts.tsx  ← Detail page: price + moving averages + volume charts
+│   ├── PortfolioPieChart.tsx      ← Portfolio allocation pie chart
+│   ├── AIInsightCard.tsx          ← AI text insight block
+│   ├── NewsCard.tsx               ← Single news card
+│   └── ReportCard.tsx             ← Single report row with PDF/CSV actions
+│
+├── store/                         ← App state (Zustand)
+│   ├── userStore.ts               ← User profile, theme, notification toggles
+│   ├── marketDataStore.ts         ← Market rows, chart data, search, live price updates
+│   ├── portfolioStore.ts          ← Holdings and allocation
+│   └── aiInsightsStore.ts         ← AI summaries, predictions, signals
+│
+├── styles/
+│   ├── tokens.css                 ← Colors, spacing, theme variables (light/dark)
+│   ├── globals.css                ← Base page styles, imports tokens
+│   └── components.css             ← Layout and component class names (`.ca-…`)
+│
+├── lib/
+│   ├── mock-data.ts               ← Sample commodities, news, portfolio, AI text
+│   ├── constants.ts               ← Nav links, commodity lists, time ranges
+│   └── report-csv.ts              ← Text used for CSV downloads on Reports page
+│
+├── types/
+│   └── models.ts                  ← Shared TypeScript shapes (commodity, news, etc.)
+│
+└── utils/
+    └── format.ts                  ← Money and percent formatting helpers
+```
+
+### Screens: URL → page file → main view component
+
+| App section (what you see) | Browser path | Page file | Main “view” component |
+|----------------------------|--------------|-----------|------------------------|
+| Dashboard (home) | `/` | `src/app/(dashboard)/page.tsx` | `DashboardView.tsx` |
+| Commodities | `/commodities` | `src/app/(dashboard)/commodities/page.tsx` | `CommoditiesView.tsx` |
+| Commodity detail | `/commodities/gold` (etc.) | `src/app/(dashboard)/commodities/[symbol]/page.tsx` | `CommodityDetailView.tsx` |
+| Portfolio | `/portfolio` | `src/app/(dashboard)/portfolio/page.tsx` | `PortfolioView.tsx` |
+| AI Insights | `/ai-insights` | `src/app/(dashboard)/ai-insights/page.tsx` | `AiInsightsView.tsx` |
+| Market News | `/market-news` | `src/app/(dashboard)/market-news/page.tsx` | `MarketNewsView.tsx` |
+| Reports | `/reports` | `src/app/(dashboard)/reports/page.tsx` | `ReportsView.tsx` |
+| Settings | `/settings` | `src/app/(dashboard)/settings/page.tsx` | `SettingsView.tsx` |
+
+### Reusable UI pieces: file → where it appears
+
+| File | Used for / appears on |
+|------|------------------------|
+| `Sidebar.tsx` | Left menu on **every** screen (desktop/tablet). |
+| `TopNavbar.tsx` | Top bar on **every** screen (search affects market table filtering). |
+| `BottomNav.tsx` | Bottom shortcuts on **phone-sized** screens. |
+| `AppShell.tsx` | Wraps page content with sidebar + top bar + mobile nav. |
+| `AppProviders.tsx` | Runs once when the app loads: fetch demo data, start live price simulation. |
+| `StatCard.tsx` | **Dashboard** — the four summary cards at the top. |
+| `ChartCard.tsx` | **Dashboard** and **Commodities** — interactive price chart. |
+| `CommodityTable.tsx` | **Dashboard** and **Commodities** — market data table. |
+| `CommodityDetailCharts.tsx` | **Commodity detail** — price, moving average, volume charts. |
+| `PortfolioPieChart.tsx` | **Portfolio** — allocation pie chart. |
+| `AIInsightCard.tsx` | **AI Insights** and **Commodity detail** — paragraph insight blocks. |
+| `NewsCard.tsx` | **Market News** — each article card. |
+| `ReportCard.tsx` | **Reports** — each downloadable report row. |
+
+### Data and API (for integrations)
+
+| Location | Purpose |
+|----------|---------|
+| `src/lib/mock-data.ts` | All **demo** numbers and text in one place—easy to replace later. |
+| `src/app/api/.../route.ts` | Each file answers one **API path** (JSON or PDF) the front end calls. |
 
 ---
 
