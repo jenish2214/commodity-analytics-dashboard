@@ -5,13 +5,48 @@ import { ChartCard } from "@/components/ChartCard";
 import { CommodityTable } from "@/components/CommodityTable";
 import { StatCard } from "@/components/StatCard";
 import { useMarketDataStore } from "@/store/marketDataStore";
-import { formatSignedUsd, formatUsd } from "@/utils/format";
+import { usePortfolioStore } from "@/store/portfolioStore";
+import { useUserStore } from "@/store/userStore";
+import {
+  formatCurrencyAmount,
+  formatSignedCurrency,
+} from "@/utils/format";
+
+function bestPerformerSymbol(
+  market: { symbol: string; commodity: string; change24h: number }[]
+): string {
+  if (market.length === 0) return "—";
+  const top = [...market].sort((a, b) => b.change24h - a.change24h)[0];
+  return top.commodity;
+}
 
 export function DashboardView() {
+  const currency = useUserStore((s) => s.currency);
   const market = useMarketDataStore((s) => s.market);
   const summary = useMarketDataStore((s) => s.summary);
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const loading = useMarketDataStore((s) => s.loading);
+  const items = usePortfolioStore((s) => s.items);
+
+  const openItems = useMemo(
+    () => items.filter((i) => i.status === "Open"),
+    [items]
+  );
+
+  const { portfolioValue, totalGain } = useMemo(() => {
+    let pv = 0;
+    let tg = 0;
+    for (const i of openItems) {
+      pv += i.currentPrice * i.quantity;
+      tg += (i.currentPrice - i.buyPrice) * i.quantity;
+    }
+    return { portfolioValue: pv, totalGain: tg };
+  }, [openItems]);
+
+  const topCommodity = useMemo(
+    () => bestPerformerSymbol(market),
+    [market]
+  );
 
   const rows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -26,23 +61,26 @@ export function DashboardView() {
         Benchmarks, flows, and AI-assisted market sentiment.
       </p>
       {loading && market.length === 0 ? (
-        <p style={{ color: "var(--color-label)" }}>Loading market data…</p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading market data…</p>
       ) : null}
       <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
         <StatCard
-          label="Total Portfolio Value"
-          value={formatUsd(summary.portfolioValue)}
+          label="Portfolio Value"
+          value={formatCurrencyAmount(portfolioValue, currency)}
         />
         <StatCard
-          label="Daily Profit Loss"
-          value={formatSignedUsd(summary.dailyPnl)}
-          hint="vs prior close"
+          label="Open Positions"
+          value={String(openItems.length)}
         />
         <StatCard
-          label="Top Performing Commodity"
-          value={summary.topCommodity}
+          label="Total Gain/Loss"
+          value={formatSignedCurrency(totalGain, currency)}
         />
-        <StatCard label="AI Market Sentiment" value={summary.aiSentiment} />
+        <StatCard
+          label="Top Commodity"
+          value={topCommodity}
+          hint="by 24h change"
+        />
       </div>
       <div style={{ display: "grid", gap: "1rem" }}>
         <ChartCard />

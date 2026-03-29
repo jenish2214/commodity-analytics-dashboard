@@ -10,14 +10,17 @@ export const COMMODITY_OPTIONS: { key: CommodityKey; label: string }[] = [
 
 export const TIME_RANGES: TimeRange[] = ["1D", "1W", "1M", "6M", "1Y"];
 
-export const NAV_ITEMS: { href: string; label: string }[] = [
-  { href: "/", label: "Dashboard" },
-  { href: "/commodities", label: "Commodities" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/ai-insights", label: "AI Insights" },
-  { href: "/market-news", label: "Market News" },
-  { href: "/reports", label: "Reports" },
-  { href: "/settings", label: "Settings" },
+export const NAV_ITEMS = [
+  { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/commodities", label: "Commodities", icon: "BarChart2" },
+  { href: "/portfolio", label: "Portfolio", icon: "Briefcase" },
+  { href: "/ai-insights", label: "AI Insights", icon: "Brain" },
+  { href: "/market-news", label: "Market News", icon: "Newspaper" },
+  { href: "/indices", label: "Market Indices", icon: "TrendingUp" },
+];
+
+export const BOTTOM_NAV_ITEMS = [
+  { href: "/logout", label: "Logout", icon: "LogOut", bottom: true }
 ];
 
 export const BOTTOM_NAV: { href: string; label: string }[] = [

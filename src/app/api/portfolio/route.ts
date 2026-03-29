@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
-import {
-  allocationSlices,
-  portfolioHoldings,
-} from "@/lib/mock-data";
 
 export async function GET() {
-  const totalValue = portfolioHoldings.reduce(
-    (sum, h) => sum + h.quantity * h.currentPrice,
-    0
-  );
-  const totalPnl = portfolioHoldings.reduce((sum, h) => sum + h.profitLoss, 0);
-
-  return NextResponse.json({
-    holdings: portfolioHoldings,
-    allocation: allocationSlices,
-    totals: {
-      value: totalValue,
-      pnl: totalPnl,
-    },
-  });
+  try {
+    // For now, return empty portfolio - user will add items manually
+    // In a real app, this would fetch from a database
+    return NextResponse.json({
+      holdings: [],
+      allocation: [],
+      totals: {
+        value: 0,
+        pnl: 0,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { 
+        error: "Failed to fetch portfolio data",
+        holdings: [],
+        allocation: [],
+        totals: { value: 0, pnl: 0 }
+      },
+      { status: 200 }
+    );
+  }
 }

@@ -40,6 +40,27 @@ export type AllocationSlice = {
   percent: number;
 };
 
+export type PortfolioItemType =
+  | "Commodity"
+  | "Stock"
+  | "Crypto"
+  | "ETF"
+  | "Other";
+
+export type PortfolioItemStatus = "Open" | "Closed";
+
+export type PortfolioItem = {
+  id: string;
+  name: string;
+  type: PortfolioItemType;
+  buyPrice: number;
+  currentPrice: number;
+  quantity: number;
+  status: PortfolioItemStatus;
+  dateAdded: string;
+  notes?: string;
+};
+
 export type AiPrediction = {
   id: string;
   commodity: string;
@@ -60,20 +81,26 @@ export type NewsArticle = {
   source: string;
   publishedAt: string;
   excerpt: string;
+  image?: string;
+  url?: string;
 };
 
-export type ReportItem = {
-  id: string;
-  title: string;
-  description: string;
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "INR" | "JPY";
+
+export type DashboardNotifications = {
+  email: boolean;
+  push: boolean;
+  priceAlerts: boolean;
 };
 
+/** @deprecated Use flat name/email on user store; kept for legacy types */
 export type UserProfile = {
   name: string;
   email: string;
   plan: string;
 };
 
+/** @deprecated Use new notification shape on user store */
 export type NotificationPrefs = {
   emailAlerts: boolean;
   priceAlerts: boolean;

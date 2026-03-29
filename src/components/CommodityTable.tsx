@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import type { MarketRow } from "@/types/models";
-import { formatPercent, formatUsd } from "@/utils/format";
+import { useUserStore } from "@/store/userStore";
+import { formatCurrencyAmount, formatPercent } from "@/utils/format";
 
 function Signal({ signal }: { signal: MarketRow["signal"] }) {
   const cls =
     signal === "BUY"
-      ? "ca-signal ca-signal--buy"
+      ? "ca-signal ca-gain"
       : signal === "SELL"
-        ? "ca-signal ca-signal--sell"
+        ? "ca-signal ca-loss"
         : "ca-signal ca-signal--hold";
   return <span className={cls}>{signal}</span>;
 }
@@ -19,6 +20,8 @@ type Props = {
 };
 
 export function CommodityTable({ rows }: Props) {
+  const currency = useUserStore((s) => s.currency);
+
   return (
     <section className="ca-card">
       <h2
@@ -45,14 +48,19 @@ export function CommodityTable({ rows }: Props) {
                 <td>
                   <Link
                     href={`/commodities/${r.symbol}`}
-                    style={{ fontWeight: 600, color: "var(--color-heading)" }}
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
+                    }}
                   >
                     {r.commodity}
                   </Link>
                 </td>
-                <td className="ca-num">{formatUsd(r.price)}</td>
+                <td className="ca-num">
+                  {formatCurrencyAmount(r.price, currency)}
+                </td>
                 <td
-                  className={`ca-num ${r.change24h >= 0 ? "ca-pos" : "ca-neg"}`}
+                  className={`ca-num ${r.change24h >= 0 ? "ca-gain" : "ca-loss"}`}
                 >
                   {formatPercent(r.change24h)}
                 </td>

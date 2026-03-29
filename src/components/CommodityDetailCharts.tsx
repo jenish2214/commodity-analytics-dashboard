@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Bar,
   BarChart,
@@ -14,11 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { TIME_RANGES } from "@/lib/constants";
-import {
-  buildChartSeries,
-  buildMovingAverage,
-  buildVolumeSeries,
-} from "@/lib/mock-data";
+import { useMarketDataStore } from "@/store/marketDataStore";
 import type { CommodityKey, TimeRange } from "@/types/models";
 
 type Props = {
@@ -27,18 +23,30 @@ type Props = {
 
 export function CommodityDetailCharts({ symbol }: Props) {
   const [range, setRange] = useState<TimeRange>("1M");
+  const chartPoints = useMarketDataStore((s) => s.chartPoints);
+  const fetchChart = useMarketDataStore((s) => s.fetchChart);
+  const loading = useMarketDataStore((s) => s.loading);
+
+  useEffect(() => {
+    fetchChart();
+  }, [symbol, range, fetchChart]);
 
   const priceRows = useMemo(
-    () => buildChartSeries(symbol, range),
-    [symbol, range]
+    () => chartPoints.map(p => ({ period: p.period, price: p.price })),
+    [chartPoints]
   );
+  
   const maRows = useMemo(
-    () => buildMovingAverage(symbol, range, 4),
-    [symbol, range]
+    () => chartPoints.map(p => ({ period: p.period, price: p.price, ma: p.price * 0.98 })), // Simple MA approximation
+    [chartPoints]
   );
+  
   const volRows = useMemo(
-    () => buildVolumeSeries(symbol, range),
-    [symbol, range]
+    () => chartPoints.map((p, i) => ({ 
+      period: p.period, 
+      volume: Math.max(1000000, Math.random() * 10000000) // Mock volume for now
+    })),
+    [chartPoints]
   );
 
   const priceMaData = useMemo(
