@@ -2,7 +2,7 @@
 
 import { AIInsightCard } from "@/components/AIInsightCard";
 import { CommodityDetailCharts } from "@/components/CommodityDetailCharts";
-import { commodityDetail } from "@/lib/mock-data";
+import { useMarketDataStore } from "@/store/marketDataStore";
 import type { CommodityKey } from "@/types/models";
 
 type Props = {
@@ -10,7 +10,18 @@ type Props = {
 };
 
 export function CommodityDetailView({ symbol }: Props) {
-  const detail = commodityDetail(symbol);
+  const market = useMarketDataStore((s) => s.market);
+  const currentData = market.find(item => item.symbol === symbol);
+  
+  const detail = {
+    name: currentData?.commodity || symbol.charAt(0).toUpperCase() + symbol.slice(1),
+    rsi: 58.2, // Would be calculated from real data in production
+    macd: 0.42,
+    trend: "Uptrend" as const,
+    aiSummary: currentData ? 
+      `${currentData.commodity} shows ${currentData.change24h > 0 ? 'positive' : 'negative'} momentum with ${Math.abs(currentData.change24h).toFixed(2)}% change. Current market conditions suggest ${currentData.signal === 'BUY' ? 'bullish' : currentData.signal === 'SELL' ? 'bearish' : 'neutral'} outlook.` :
+      "Loading market data...",
+  };
 
   return (
     <div className="ca-page">

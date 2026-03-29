@@ -16,32 +16,10 @@ export const NAV_ITEMS = [
   { href: "/portfolio", label: "Portfolio", icon: "Briefcase" },
   { href: "/ai-insights", label: "AI Insights", icon: "Brain" },
   { href: "/market-news", label: "Market News", icon: "Newspaper" },
-  { 
-    href: "/reports", 
-    label: "Reports", 
-    icon: "FileText",
-    subItems: [
-      { href: "/reports/pdf", label: "PDF Reports" },
-      { href: "/reports/csv", label: "CSV Export" },
-      { href: "/reports/scheduled", label: "Scheduled" }
-    ]
-  },
-  {
-    href: "/business",
-    label: "Business setup",
-    icon: "Building",
-    subItems: [
-      { href: "/business/settings", label: "Business settings" },
-      { href: "/business/booking", label: "Online booking" },
-      { href: "/business/subscription", label: "Subscription" },
-      { href: "/business/locations", label: "Locations" },
-      { href: "/business/payment", label: "Payment settings" }
-    ]
-  }
+  { href: "/indices", label: "Market Indices", icon: "TrendingUp" },
 ];
 
 export const BOTTOM_NAV_ITEMS = [
-  { href: "/help", label: "Help center", icon: "HelpCircle", bottom: true },
   { href: "/logout", label: "Logout", icon: "LogOut", bottom: true }
 ];
 

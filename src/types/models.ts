@@ -81,6 +81,8 @@ export type NewsArticle = {
   source: string;
   publishedAt: string;
   excerpt: string;
+  image?: string;
+  url?: string;
 };
 
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "INR" | "JPY";

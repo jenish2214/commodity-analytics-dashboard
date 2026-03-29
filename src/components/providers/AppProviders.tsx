@@ -8,7 +8,6 @@ import { usePortfolioStore } from "@/store/portfolioStore";
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const fetchMarket = useMarketDataStore((s) => s.fetchMarket);
   const fetchChart = useMarketDataStore((s) => s.fetchChart);
-  const applyPriceTick = useMarketDataStore((s) => s.applyPriceTick);
   const startLiveUpdates = useMarketDataStore((s) => s.startLiveUpdates);
   const fetchPortfolio = usePortfolioStore((s) => s.fetchPortfolio);
   const fetchInsights = useAiInsightsStore((s) => s.fetchInsights);
@@ -31,12 +30,21 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     void fetchInsights();
   }, [fetchPortfolio, fetchInsights]);
 
+  // Auto-refresh commodity prices every 5 minutes
   useEffect(() => {
-    const id = window.setInterval(() => {
-      applyPriceTick();
-    }, 8000);
-    return () => window.clearInterval(id);
-  }, [applyPriceTick]);
+    const fetchPrices = async () => {
+      try {
+        // Use the existing fetchMarket method to refresh data
+        await fetchMarket();
+      } catch (error) {
+        console.error("Failed to refresh prices:", error);
+      }
+    };
+
+    // Don't fetch immediately since fetchMarket is already called on mount
+    const interval = setInterval(fetchPrices, 5 * 60 * 1000); // 5 min
+    return () => clearInterval(interval);
+  }, [fetchMarket]);
 
   return (
     <>

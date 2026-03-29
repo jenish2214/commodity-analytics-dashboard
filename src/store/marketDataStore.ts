@@ -5,10 +5,13 @@ import type {
   MarketRow,
   TimeRange,
 } from "@/types/models";
-import { dashboardSummary } from "@/lib/mock-data";
-import { metalsDevService } from "@/lib/metalsDevApi";
 
-type Summary = typeof dashboardSummary;
+type Summary = {
+  portfolioValue: number;
+  dailyPnl: number;
+  topCommodity: string;
+  aiSentiment: "Bullish" | "Bearish" | "Neutral";
+};
 
 type MarketState = {
   market: MarketRow[];
@@ -35,86 +38,54 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
 
   return {
     market: [],
-    summary: dashboardSummary,
+    summary: { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
     chartPoints: [],
     selectedSymbol: "gold",
     timeRange: "1M",
     searchQuery: "",
     loading: false,
     lastLiveUpdate: 0,
-  fetchMarket: async () => {
+
+    fetchMarket: async () => {
       set({ loading: true });
       try {
-        // Try to fetch live prices first
-        try {
-          const liveData = await metalsDevService.fetchLatestRates();
-          const commodityData = metalsDevService.mapToCommodityData(liveData);
-          
-          // Convert to MarketRow format
-          const marketRows: MarketRow[] = Object.entries(commodityData).map(([symbol, data]) => ({
-            id: `m${symbol}`,
-            commodity: symbol.charAt(0).toUpperCase() + symbol.slice(1),
-            symbol: symbol as CommodityKey,
-            price: data.price,
-            change24h: data.change24h,
-            volume: data.volume,
-            marketCap: data.marketCap,
-            signal: data.signal,
-          }));
-
-          set({
-            market: marketRows,
-            summary: {
-              ...dashboardSummary,
-              portfolioValue: marketRows.reduce((sum, row) => sum + row.price * 100, 0),
-            },
-            lastLiveUpdate: Date.now(),
-            loading: false,
-          });
-        } catch (liveError) {
-          // Fallback to mock data if live API fails
-          console.warn('Live API failed, using mock data:', liveError);
-          const res = await fetch("/api/commodities", { cache: "no-store" });
-          const data = (await res.json()) as {
-            market: MarketRow[];
-            summary: Summary;
-          };
-          set({
-            market: data.market,
-            summary: data.summary,
-            loading: false,
-          });
+        // Fetch real market data from our API
+        const res = await fetch("/api/commodities", { cache: "no-store" });
+        
+        if (!res.ok) {
+          throw new Error("Failed to fetch market data");
         }
+        
+        const data = await res.json();
+        set({
+          market: data.market || [],
+          summary: data.summary || { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
+          loading: false,
+          lastLiveUpdate: Date.now(),
+        });
       } catch {
-        set({ loading: false });
+        // If API fails, return empty state with error
+        set({
+          market: [],
+          summary: { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
+          loading: false,
+        });
       }
     },
 
     fetchLivePrices: async () => {
       try {
-        const liveData = await metalsDevService.fetchLatestRates();
-        const commodityData = metalsDevService.mapToCommodityData(liveData);
+        // Fetch real market data from our API
+        const res = await fetch("/api/commodities", { cache: "no-store" });
         
-        // Calculate price changes
-        const currentMarket = get().market;
-        const updatedMarket = currentMarket.map(row => {
-          const commodity = commodityData[row.symbol as keyof typeof commodityData];
-          if (commodity) {
-            const previousPrice = row.price;
-            const priceChange = commodity.price - previousPrice;
-            const changePercent = (priceChange / previousPrice) * 100;
-            
-            return {
-              ...row,
-              price: commodity.price,
-              change24h: Math.round(changePercent * 100) / 100,
-            };
-          }
-          return row;
-        });
-
+        if (!res.ok) {
+          throw new Error("Failed to fetch live prices");
+        }
+        
+        const data = await res.json();
+        
         set({
-          market: updatedMarket,
+          market: data.market || [],
           lastLiveUpdate: Date.now(),
         });
       } catch (error) {
@@ -147,25 +118,51 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
     fetchChart: async () => {
       const { selectedSymbol, timeRange } = get();
       const params = new URLSearchParams({
-        chart: "true",
         symbol: selectedSymbol,
-        range: timeRange,
+        range: timeRange.toLowerCase(),
       });
-      const res = await fetch(`/api/commodities?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const data = (await res.json()) as { points: ChartPoint[] };
-      set({ chartPoints: data.points });
+      
+      try {
+        const res = await fetch(`/api/commodities/chart?${params.toString()}`, {
+          cache: "no-store",
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch chart data: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!data.points || data.points.length === 0) {
+          console.warn('No chart points returned for', selectedSymbol, timeRange);
+          set({ chartPoints: [] });
+          return;
+        }
+        
+        set({ chartPoints: data.points });
+        console.log('Chart data loaded:', data.points.length, 'points for', selectedSymbol);
+        
+      } catch (error) {
+        console.error('Failed to fetch chart:', error);
+        set({ chartPoints: [] });
+      }
     },
+
     setSelectedSymbol: (symbol) => {
       set({ selectedSymbol: symbol });
       void get().fetchChart();
     },
+
     setTimeRange: (range) => {
       set({ timeRange: range });
       void get().fetchChart();
     },
-    setSearchQuery: (q) => set({ searchQuery: q }),
+
+    setSearchQuery: (q) => {
+      const normalizedQuery = q.trim();
+      set({ searchQuery: normalizedQuery });
+    },
+
     applyPriceTick: () =>
       set((state) => ({
         market: state.market.map((row) => {
