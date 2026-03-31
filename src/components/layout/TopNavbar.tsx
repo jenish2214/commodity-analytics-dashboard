@@ -5,7 +5,6 @@ import { useMarketDataStore } from "@/store/marketDataStore";
 import { useUserStore } from "@/store/userStore";
 import type { CurrencyCode } from "@/types/models";
 import { useState, useEffect, useRef } from "react";
-import { getMarketStatus } from "@/utils/marketStatus";
 import { timeAgo } from "@/utils/format";
 
 const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
@@ -40,16 +39,7 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [marketStatus, setMarketStatus] = useState(getMarketStatus());
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Update market status every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMarketStatus(getMarketStatus());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   const initials = name
     .split(" ")
@@ -274,31 +264,7 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
           )}
         </div>
         
-        {/* Market Status */}
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          {([marketStatus.nyse, marketStatus.london, marketStatus.metals]).map((market) => (
-            <span 
-              key={market.label} 
-              style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "4px",
-                fontSize: "11px", 
-                color: "var(--text-secondary)" 
-              }}
-            >
-              <span 
-                style={{ 
-                  width: 6, 
-                  height: 6, 
-                  borderRadius: "50%",
-                  background: market.open ? "#16a34a" : "#dc2626" 
-                }} 
-              />
-              {market.label}
-            </span>
-          ))}
-        </div>
+        {/* Actions */}
         <button type="button" className="ca-icon-btn" aria-label="Notifications">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
             <path

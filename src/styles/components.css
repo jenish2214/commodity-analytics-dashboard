@@ -1069,3 +1069,10 @@
     opacity: 1;
   }
 }
+
+/* Responsive Settings Grids */
+.ca-grid-2 { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .ca-grid-2 { grid-template-columns: 1fr 1fr; } }
+.ca-grid-3 { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .ca-grid-3 { grid-template-columns: repeat(3, 1fr); } }
+

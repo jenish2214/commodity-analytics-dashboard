@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChartCard } from "@/components/ChartCard";
 import { CommodityTable } from "@/components/CommodityTable";
 import { StatCard } from "@/components/StatCard";
 import { useMarketDataStore } from "@/store/marketDataStore";
@@ -61,31 +60,40 @@ export function DashboardView() {
         Benchmarks, flows, and AI-assisted market sentiment.
       </p>
       {loading && market.length === 0 ? (
-        <p style={{ color: "var(--text-secondary)" }}>Loading market data…</p>
-      ) : null}
-      <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
-        <StatCard
-          label="Portfolio Value"
-          value={formatCurrencyAmount(portfolioValue, currency)}
-        />
-        <StatCard
-          label="Open Positions"
-          value={String(openItems.length)}
-        />
-        <StatCard
-          label="Total Gain/Loss"
-          value={formatSignedCurrency(totalGain, currency)}
-        />
-        <StatCard
-          label="Top Commodity"
-          value={topCommodity}
-          hint="by 24h change"
-        />
-      </div>
-      <div style={{ display: "grid", gap: "1rem" }}>
-        <ChartCard />
-        <CommodityTable rows={rows} />
-      </div>
+        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+          <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
+             {[1, 2, 3, 4].map(i => (
+               <div key={i} style={{ height: '104px', borderRadius: '12px', background: 'var(--bg-hover)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+             ))}
+          </div>
+          <div style={{ height: '400px', borderRadius: '12px', background: 'var(--bg-hover)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        </div>
+      ) : (
+        <>
+          <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
+            <StatCard
+              label="Portfolio Value"
+              value={formatCurrencyAmount(portfolioValue, currency)}
+            />
+            <StatCard
+              label="Open Positions"
+              value={String(openItems.length)}
+            />
+            <StatCard
+              label="Total Gain/Loss"
+              value={formatSignedCurrency(totalGain, currency)}
+            />
+            <StatCard
+              label="Top Commodity"
+              value={topCommodity}
+              hint="by 24h change"
+            />
+          </div>
+          <div style={{ display: "grid", gap: "1rem" }}>
+            <CommodityTable rows={rows} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

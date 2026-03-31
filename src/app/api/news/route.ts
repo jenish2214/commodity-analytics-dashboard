@@ -138,7 +138,16 @@ function parseRSS(xml: string, source: string, category: string) {
     const title = get("title");
     const link = get("link");
     const pubDate = get("pubDate");
-    const desc = get("description").replace(/<[^>]+>/g, "").slice(0, 200);
+    const descContent = get("description");
+    const desc = descContent.replace(/<[^>]+>/g, "").slice(0, 200);
+
+    let image = null;
+    const mediaContent = block.match(/<media:content[^>]*url="([^"]+)"/i);
+    const enclosure = block.match(/<enclosure[^>]*url="([^"]+)"/i);
+    const imgInDesc = descContent.match(/<img[^>]*src="([^"]+)"/i);
+    if (mediaContent) image = mediaContent[1];
+    else if (enclosure) image = enclosure[1];
+    else if (imgInDesc) image = imgInDesc[1];
     
     if (title && link) {
       items.push({
@@ -149,6 +158,7 @@ function parseRSS(xml: string, source: string, category: string) {
         publishedAt: formatDate(pubDate),
         url: link,
         excerpt: desc,
+        image,
       });
     }
   }

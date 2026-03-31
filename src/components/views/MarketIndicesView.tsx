@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Globe, Clock } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { TrendingUp, TrendingDown, Globe, Clock, Activity } from "lucide-react";
+import { getMarketStatus } from "@/utils/marketStatus";
 
 interface MarketIndex {
   symbol: string;
@@ -38,11 +39,61 @@ export function MarketIndicesView() {
   const [selectedCountry, setSelectedCountry] = useState<string>("All");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  const [marketStatus, setMarketStatus] = useState(getMarketStatus());
+  const prevMarketStatus = useRef(marketStatus);
+
   useEffect(() => {
     fetchIndices();
     
     // Auto-refresh every 5 minutes
     const interval = setInterval(fetchIndices, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Market specific status tracking and notifications
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    const interval = setInterval(() => {
+      const newStatus = getMarketStatus();
+      const prev = prevMarketStatus.current;
+      
+      const changes: string[] = [];
+      const warnings: string[] = [];
+
+      if (newStatus.nyse.open !== prev.nyse.open) {
+        changes.push(`NYSE is now ${newStatus.nyse.open ? "Open" : "Closed"}`);
+      }
+      if (newStatus.london.open !== prev.london.open) {
+        changes.push(`London market is now ${newStatus.london.open ? "Open" : "Closed"}`);
+      }
+      
+      const checkWarning = (market: any, prevMarket: any) => {
+        if (market.minsToOpen <= 30 && prevMarket.minsToOpen > 30) {
+          warnings.push(`${market.label} opens in 30 minutes!`);
+        }
+        if (market.minsToClose <= 30 && prevMarket.minsToClose > 30) {
+          warnings.push(`${market.label} closes in 30 minutes!`);
+        }
+      };
+
+      if ('minsToOpen' in newStatus.nyse) checkWarning(newStatus.nyse, prev.nyse);
+      if ('minsToOpen' in newStatus.london) checkWarning(newStatus.london, prev.london);
+      
+      const allAlerts = [...changes, ...warnings];
+      if (allAlerts.length > 0) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Market Alert", {
+            body: allAlerts.join("\n"),
+          });
+        }
+      }
+      
+      prevMarketStatus.current = newStatus;
+      setMarketStatus(newStatus);
+    }, 60000); // Check every minute
     return () => clearInterval(interval);
   }, []);
 
@@ -184,6 +235,49 @@ export function MarketIndicesView() {
           }}>
             {formatPercent(summary.avgChange)}
           </p>
+        </div>
+      </div>
+
+      {/* Global Exchange Hours */}
+      <div style={{ marginBottom: "2rem" }}>
+        <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Activity size={18} style={{ color: "var(--accent)" }} />
+          Global Exchange Hours
+        </h2>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+          {([marketStatus.nyse, marketStatus.london, marketStatus.metals]).map((market) => (
+            <div
+              key={market.label}
+              style={{
+                flex: 1,
+                minWidth: "200px",
+                padding: "1rem",
+                borderRadius: "8px",
+                background: "var(--bg-card)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{market.label}</span>
+                <span style={{
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: "4px",
+                  background: market.open ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                  color: market.open ? "var(--gain)" : "var(--loss)",
+                  fontSize: "0.75rem",
+                  fontWeight: 600
+                }}>
+                  {market.open ? "OPEN" : "CLOSED"}
+                </span>
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                {market.statusText || (market.open ? "Trading actively" : "Trading halted")}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

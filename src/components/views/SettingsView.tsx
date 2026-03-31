@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   User, Palette, Bell, BarChart2, Shield, AlertTriangle,
   Camera, Moon, Sun, Check, ChevronDown, Globe, Clock,
   RefreshCw, KeyRound, LogOut, Download, Trash2, X,
-  Mail, Smartphone, TrendingUp, Newspaper, FileText,
+  Mail, Smartphone, TrendingUp, Newspaper, FileText, ArrowLeft
 } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
 import { useChartPreferencesStore } from "@/store/chartPreferencesStore";
@@ -30,11 +31,11 @@ interface Tab {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TABS: Tab[] = [
-  { id: "profile",       label: "Profile",       icon: <User       size={16} /> },
-  { id: "appearance",    label: "Appearance",    icon: <Palette    size={16} /> },
-  { id: "notifications", label: "Notifications", icon: <Bell       size={16} /> },
-  { id: "data",          label: "Data & Markets",icon: <BarChart2  size={16} /> },
-  { id: "security",      label: "Security",      icon: <Shield     size={16} /> },
+  { id: "profile", label: "Profile", icon: <User size={16} /> },
+  { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
+  { id: "notifications", label: "Notifications", icon: <Bell size={16} /> },
+  { id: "data", label: "Data & Markets", icon: <BarChart2 size={16} /> },
+  { id: "security", label: "Security", icon: <Shield size={16} /> },
 ];
 
 const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
@@ -46,19 +47,19 @@ const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
 ];
 
 const CHART_TYPE_OPTIONS = [
-  { value: "line",        label: "Line" },
-  { value: "area",        label: "Area" },
+  { value: "line", label: "Line" },
+  { value: "area", label: "Area" },
   { value: "candlestick", label: "Candlestick" },
 ];
 
 const INDICATOR_OPTIONS = [
-  { value: "price",    label: "Price" },
-  { value: "volume",   label: "Volume" },
-  { value: "sma",      label: "SMA" },
-  { value: "ema",      label: "EMA" },
-  { value: "rsi",      label: "RSI" },
-  { value: "macd",     label: "MACD" },
-  { value: "bollinger",label: "Bollinger Bands" },
+  { value: "price", label: "Price" },
+  { value: "volume", label: "Volume" },
+  { value: "sma", label: "SMA" },
+  { value: "ema", label: "EMA" },
+  { value: "rsi", label: "RSI" },
+  { value: "macd", label: "MACD" },
+  { value: "bollinger", label: "Bollinger Bands" },
 ];
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -325,10 +326,10 @@ function ProfileTab() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <InputField id="s-name"  label="Full Name"  value={local.name}  onChange={(v) => setLocal({ ...local, name: v })} />
-          <InputField id="s-email" label="Email"      value={local.email} onChange={(v) => setLocal({ ...local, email: v })} type="email" />
-          <InputField id="s-phone" label="Phone"      value={local.phone} onChange={(v) => setLocal({ ...local, phone: v })} placeholder="+1 555 000 0000" />
+        <div className="ca-grid-2">
+          <InputField id="s-name" label="Full Name" value={local.name} onChange={(v) => setLocal({ ...local, name: v })} />
+          <InputField id="s-email" label="Email" value={local.email} onChange={(v) => setLocal({ ...local, email: v })} type="email" />
+          <InputField id="s-phone" label="Phone" value={local.phone} onChange={(v) => setLocal({ ...local, phone: v })} placeholder="+1 555 000 0000" />
         </div>
 
         <div style={{ marginTop: "16px" }}>
@@ -361,7 +362,7 @@ function ProfileTab() {
 
       <SettingsCard>
         <SectionTitle>Localisation</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div className="ca-grid-2">
           <SelectField<Timezone>
             label="Timezone" value={timezone}
             options={TIMEZONES.map((t) => ({ value: t, label: t.replace("_", " ") }))}
@@ -385,16 +386,16 @@ function AppearanceTab() {
     setTheme, setAccentColor, setFontSize, setCompactMode, setCurrency } = useUserStore();
 
   const themeOptions: { id: "dark" | "light" | "navy"; label: string; bg: string; fg: string; border: string }[] = [
-    { id: "dark",  label: "Dark",  bg: "#0f172a", fg: "#f8fafc", border: "#334155" },
+    { id: "dark", label: "Dark", bg: "#0f172a", fg: "#f8fafc", border: "#334155" },
     { id: "light", label: "Light", bg: "#f8fafc", fg: "#0f172a", border: "#cbd5e1" },
-    { id: "navy",  label: "Navy",  bg: "#0a1628", fg: "#e2e8f0", border: "#3b82f6" },
+    { id: "navy", label: "Navy", bg: "#0a1628", fg: "#e2e8f0", border: "#3b82f6" },
   ];
 
   return (
     <>
       <SettingsCard>
         <SectionTitle>Theme</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px" }}>
+        <div className="ca-grid-3">
           {themeOptions.map((t) => {
             const active = theme === t.id;
             return (
@@ -452,7 +453,7 @@ function AppearanceTab() {
 
       <SettingsCard>
         <SectionTitle>Display Options</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div className="ca-grid-2">
           <div>
             <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-secondary)", marginBottom: "12px" }}>
               Font Size
@@ -549,7 +550,7 @@ function NotificationsTab() {
 
       <SettingsCard>
         <SectionTitle>Alert Frequency</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
+        <div className="ca-grid-3" style={{ gap: "8px" }}>
           {(["realtime", "hourly", "daily"] as const).map((f) => {
             const labels: Record<string, string> = { realtime: "Real-time", hourly: "Hourly", daily: "Daily" };
             const active = notifications.frequency === f;
@@ -636,10 +637,10 @@ function DataTab() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+          <div className="ca-grid-3">
             {[
-              { label: "Show Grid",    checked: preferences.showGrid,    fn: setShowGrid },
-              { label: "Show Volume",  checked: preferences.showVolume,  fn: setShowVolume },
+              { label: "Show Grid", checked: preferences.showGrid, fn: setShowGrid },
+              { label: "Show Volume", checked: preferences.showVolume, fn: setShowVolume },
               { label: "Show Tooltip", checked: preferences.showTooltip, fn: setShowTooltip },
             ].map(({ label, checked, fn }) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -661,9 +662,9 @@ function SecurityTab() {
   const [showReset, setShowReset] = useState(false);
 
   const FAKE_SESSIONS = [
-    { id: "s1", device: "Chrome — Windows",    location: "Mumbai, IN",    time: "Now",         current: true },
-    { id: "s2", device: "Safari — iPhone 15",  location: "Mumbai, IN",    time: "2 days ago",  current: false },
-    { id: "s3", device: "Firefox — macOS",     location: "New York, US",  time: "5 days ago",  current: false },
+    { id: "s1", device: "Chrome — Windows", location: "Mumbai, IN", time: "Now", current: true },
+    { id: "s2", device: "Safari — iPhone 15", location: "Mumbai, IN", time: "2 days ago", current: false },
+    { id: "s3", device: "Firefox — macOS", location: "New York, US", time: "5 days ago", current: false },
   ];
 
   return (
@@ -799,25 +800,38 @@ function SecurityTab() {
 
 // ─── Main Settings View ───────────────────────────────────────────────────────
 
+
 export function SettingsView() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const initFromStorage = useUserStore((s) => s.initFromStorage);
 
   useEffect(() => { initFromStorage(); }, [initFromStorage]);
 
   const tabContent: Record<TabId, React.ReactNode> = {
-    profile:       <ProfileTab />,
-    appearance:    <AppearanceTab />,
+    profile: <ProfileTab />,
+    appearance: <AppearanceTab />,
     notifications: <NotificationsTab />,
-    data:          <DataTab />,
-    security:      <SecurityTab />,
+    data: <DataTab />,
+    security: <SecurityTab />,
   };
 
   return (
-    <div style={{ maxWidth: "760px", margin: "0 auto", padding: "40px 24px 80px" }}>
+    <div style={{ maxWidth: "760px", margin: "0", padding: "40px 24px 80px" }}>
 
       {/* Header */}
       <div style={{ marginBottom: "32px" }}>
+        <button
+          onClick={() => router.push("/")}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--text-secondary)", fontSize: "14px",
+            padding: "0 0 20px 0", fontFamily: "inherit"
+          }}
+        >
+          <ArrowLeft size={16} /> Back to Dashboard
+        </button>
         <h1 style={{ fontSize: "26px", fontWeight: 700, marginBottom: "4px" }}>Settings</h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>
           Manage your account, appearance, and market preferences
