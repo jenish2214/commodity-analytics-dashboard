@@ -42,6 +42,7 @@ import {
   Info,
 } from "lucide-react";
 import { useQuantCalculatorStore } from "@/store/quantCalculatorStore";
+import { SmoothModelMetricCard } from "@/components/SmoothModelMetricCard";
 
 const ASSET_COLORS: Record<string, string> = {
   equity: "#0b1f33",
@@ -938,12 +939,12 @@ export default function QuantCalculatorPage() {
                         for your portfolio. This helps understand how your portfolio value changes with market movements.
                       </p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                        <ModelMetricCard label="Option Price" value={`$${metrics.blackScholesMetrics.optionPrice.toFixed(2)}`} description="Theoretical value of portfolio option" />
-                        <ModelMetricCard label="Delta" value={metrics.blackScholesMetrics.delta.toFixed(4)} description="Sensitivity to underlying price changes" />
-                        <ModelMetricCard label="Gamma" value={metrics.blackScholesMetrics.gamma.toFixed(6)} description="Rate of change of delta" />
-                        <ModelMetricCard label="Theta" value={`${metrics.blackScholesMetrics.theta.toFixed(2)}/day`} description="Time decay per day" />
-                        <ModelMetricCard label="Vega" value={metrics.blackScholesMetrics.vega.toFixed(4)} description="Sensitivity to volatility changes" />
-                        <ModelMetricCard label="Implied Volatility" value={`${metrics.blackScholesMetrics.impliedVolatility.toFixed(2)}%`} description="Market's expectation of volatility" />
+                        <SmoothModelMetricCard label="Option Price" value={`$${metrics.blackScholesMetrics.optionPrice.toFixed(2)}`} description="Theoretical value of portfolio option" index={0} />
+                        <SmoothModelMetricCard label="Delta" value={metrics.blackScholesMetrics.delta.toFixed(4)} description="Sensitivity to underlying price changes" index={1} />
+                        <SmoothModelMetricCard label="Gamma" value={metrics.blackScholesMetrics.gamma.toFixed(6)} description="Rate of change of delta" index={2} />
+                        <SmoothModelMetricCard label="Theta" value={`${metrics.blackScholesMetrics.theta.toFixed(2)}/day`} description="Time decay per day" index={3} />
+                        <SmoothModelMetricCard label="Vega" value={metrics.blackScholesMetrics.vega.toFixed(4)} description="Sensitivity to volatility changes" index={4} />
+                        <SmoothModelMetricCard label="Implied Volatility" value={`${metrics.blackScholesMetrics.impliedVolatility.toFixed(2)}%`} description="Market's expectation of volatility" index={5} />
                       </div>
                     </div>
                   )}
@@ -989,12 +990,12 @@ export default function QuantCalculatorPage() {
                         Alpha measures your portfolio's excess return compared to the market benchmark.
                       </p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                        <ModelMetricCard label="Expected Return" value={`${metrics.capm.expectedReturn.toFixed(2)}%`} description="Based on CAPM formula" />
-                        <ModelMetricCard label="Alpha" value={`${metrics.capm.alpha > 0 ? "+" : ""}${metrics.capm.alpha.toFixed(2)}%`} description="Excess return vs market" isPositive={metrics.capm.alpha > 0} />
-                        <ModelMetricCard label="R-Squared" value={metrics.capm.rSquared.toFixed(3)} description="Correlation with market" />
-                        <ModelMetricCard label="Treynor Ratio" value={metrics.capm.treynorRatio.toFixed(3)} description="Risk-adjusted return (beta)" />
-                        <ModelMetricCard label="Information Ratio" value={metrics.capm.informationRatio.toFixed(3)} description="Active return per unit risk" />
-                        <ModelMetricCard label="Portfolio Beta" value={metrics.beta.toFixed(3)} description="Systematic risk measure" />
+                        <SmoothModelMetricCard label="Expected Return" value={`${metrics.capm.expectedReturn.toFixed(2)}%`} description="Based on CAPM formula" index={0} />
+                        <SmoothModelMetricCard label="Alpha" value={`${metrics.capm.alpha > 0 ? "+" : ""}${metrics.capm.alpha.toFixed(2)}%`} description="Excess return vs market" isPositive={metrics.capm.alpha > 0} index={1} />
+                        <SmoothModelMetricCard label="R-Squared" value={metrics.capm.rSquared.toFixed(3)} description="Correlation with market" index={2} />
+                        <SmoothModelMetricCard label="Treynor Ratio" value={metrics.capm.treynorRatio.toFixed(3)} description="Risk-adjusted return (beta)" index={3} />
+                        <SmoothModelMetricCard label="Information Ratio" value={metrics.capm.informationRatio.toFixed(3)} description="Active return per unit risk" index={4} />
+                        <SmoothModelMetricCard label="Portfolio Beta" value={metrics.beta.toFixed(3)} description="Systematic risk measure" index={5} />
                       </div>
                     </div>
                   )}
@@ -1015,15 +1016,15 @@ export default function QuantCalculatorPage() {
                         These ratios focus on downside risk and risk-adjusted returns.
                       </p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                        <ModelMetricCard label="Sortino Ratio" value={metrics.hedgeFundMetrics.sortinoRatio.toFixed(3)} description="Return per unit downside risk" />
-                        <ModelMetricCard label="Calmar Ratio" value={metrics.hedgeFundMetrics.calmarRatio.toFixed(3)} description="Return vs max drawdown" />
-                        <ModelMetricCard label="Sterling Ratio" value={metrics.hedgeFundMetrics.sterlingRatio.toFixed(3)} description="Return vs average drawdown" />
-                        <ModelMetricCard label="Burke Ratio" value={metrics.hedgeFundMetrics.burkeRatio.toFixed(3)} description="Return vs squared drawdowns" />
-                        <ModelMetricCard label="Pain Ratio" value={metrics.hedgeFundMetrics.painRatio.toFixed(3)} description="Return vs pain index" />
-                        <ModelMetricCard label="Ulcer Index" value={metrics.hedgeFundMetrics.ulcerIndex.toFixed(3)} description="Depth and duration of drawdowns" />
-                        <ModelMetricCard label="Pain Index" value={metrics.hedgeFundMetrics.painIndex.toFixed(3)} description="Average drawdown intensity" />
-                        <ModelMetricCard label="Up Capture" value={`${(metrics.hedgeFundMetrics.upCapture * 100).toFixed(1)}%`} description="Captures market upside" />
-                        <ModelMetricCard label="Down Capture" value={`${(metrics.hedgeFundMetrics.downCapture * 100).toFixed(1)}%`} description="Captures market downside" />
+                        <SmoothModelMetricCard label="Sortino Ratio" value={metrics.hedgeFundMetrics.sortinoRatio} description="Return per unit downside risk" index={0} />
+                        <SmoothModelMetricCard label="Calmar Ratio" value={metrics.hedgeFundMetrics.calmarRatio} description="Return vs max drawdown" index={1} />
+                        <SmoothModelMetricCard label="Sterling Ratio" value={metrics.hedgeFundMetrics.sterlingRatio} description="Return vs average drawdown" index={2} />
+                        <SmoothModelMetricCard label="Burke Ratio" value={metrics.hedgeFundMetrics.burkeRatio} description="Return vs squared drawdowns" index={3} />
+                        <SmoothModelMetricCard label="Pain Ratio" value={metrics.hedgeFundMetrics.painRatio} description="Return vs pain index" index={4} />
+                        <SmoothModelMetricCard label="Ulcer Index" value={metrics.hedgeFundMetrics.ulcerIndex} description="Depth and duration of drawdowns" index={5} />
+                        <SmoothModelMetricCard label="Pain Index" value={metrics.hedgeFundMetrics.painIndex} description="Average drawdown intensity" index={6} />
+                        <SmoothModelMetricCard label="Up Capture" value={`${(metrics.hedgeFundMetrics.upCapture * 100).toFixed(1)}%`} description="Captures market upside" index={7} />
+                        <SmoothModelMetricCard label="Down Capture" value={`${(metrics.hedgeFundMetrics.downCapture * 100).toFixed(1)}%`} description="Captures market downside" index={8} />
                       </div>
                     </div>
                   )}
@@ -1044,12 +1045,12 @@ export default function QuantCalculatorPage() {
                         to different risk factors that explain stock returns.
                       </p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                        <ModelMetricCard label="Market Factor" value={metrics.factorAnalysis.marketFactor.toFixed(3)} description="Overall market exposure (Beta)" />
-                        <ModelMetricCard label="Size Factor" value={metrics.factorAnalysis.sizeFactor.toFixed(3)} description="Small vs large cap tilt" />
-                        <ModelMetricCard label="Value Factor" value={metrics.factorAnalysis.valueFactor.toFixed(3)} description="Value vs growth tilt" />
-                        <ModelMetricCard label="Momentum Factor" value={metrics.factorAnalysis.momentumFactor.toFixed(3)} description="Trend following exposure" />
-                        <ModelMetricCard label="Quality Factor" value={metrics.factorAnalysis.qualityFactor.toFixed(3)} description="High quality stock exposure" />
-                        <ModelMetricCard label="Low Volatility" value={metrics.factorAnalysis.lowVolatilityFactor.toFixed(3)} description="Defensive positioning" />
+                        <SmoothModelMetricCard label="Market Factor" value={metrics.factorAnalysis.marketFactor.toFixed(3)} description="Overall market exposure (Beta)" index={0} />
+                        <SmoothModelMetricCard label="Size Factor" value={metrics.factorAnalysis.sizeFactor.toFixed(3)} description="Small vs large cap tilt" index={1} />
+                        <SmoothModelMetricCard label="Value Factor" value={metrics.factorAnalysis.valueFactor.toFixed(3)} description="Value vs growth tilt" index={2} />
+                        <SmoothModelMetricCard label="Momentum Factor" value={metrics.factorAnalysis.momentumFactor.toFixed(3)} description="Trend following exposure" index={3} />
+                        <SmoothModelMetricCard label="Quality Factor" value={metrics.factorAnalysis.qualityFactor.toFixed(3)} description="High quality stock exposure" index={4} />
+                        <SmoothModelMetricCard label="Low Volatility" value={metrics.factorAnalysis.lowVolatilityFactor.toFixed(3)} description="Defensive positioning" index={5} />
                       </div>
                     </div>
                   )}
@@ -1070,12 +1071,12 @@ export default function QuantCalculatorPage() {
                         understand the portfolio's behavior during market stress periods.
                       </p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                        <ModelMetricCard label="Skewness" value={metrics.tailRisk.skewness.toFixed(3)} description="Distribution asymmetry" />
-                        <ModelMetricCard label="Kurtosis" value={metrics.tailRisk.kurtosis.toFixed(3)} description="Tail thickness (fat tails)" />
-                        <ModelMetricCard label="Jarque-Bera Test" value={metrics.tailRisk.jarqueBera.toFixed(2)} description="Normality test statistic" />
-                        <ModelMetricCard label="Maximum Loss" value={`-$${Math.abs(metrics.tailRisk.maximumLoss).toLocaleString()}`} description="Worst case scenario" isNegative />
-                        <ModelMetricCard label="Average Loss" value={`-$${Math.abs(metrics.tailRisk.averageLoss).toLocaleString()}`} description="Mean of losses" isNegative />
-                        <ModelMetricCard label="Loss Std Dev" value={metrics.tailRisk.lossStdDev.toFixed(2)} description="Loss volatility" />
+                        <SmoothModelMetricCard label="Skewness" value={metrics.tailRisk.skewness.toFixed(3)} description="Distribution asymmetry" index={0} />
+                        <SmoothModelMetricCard label="Kurtosis" value={metrics.tailRisk.kurtosis.toFixed(3)} description="Tail thickness (fat tails)" index={1} />
+                        <SmoothModelMetricCard label="Jarque-Bera Test" value={metrics.tailRisk.jarqueBera.toFixed(2)} description="Normality test statistic" index={2} />
+                        <SmoothModelMetricCard label="Maximum Loss" value={`-$${Math.abs(metrics.tailRisk.maximumLoss).toLocaleString()}`} description="Worst case scenario" isNegative index={3} />
+                        <SmoothModelMetricCard label="Average Loss" value={`-$${Math.abs(metrics.tailRisk.averageLoss).toLocaleString()}`} description="Mean of losses" isNegative index={4} />
+                        <SmoothModelMetricCard label="Loss Std Dev" value={metrics.tailRisk.lossStdDev.toFixed(2)} description="Loss volatility" index={5} />
                       </div>
                     </div>
                   )}
