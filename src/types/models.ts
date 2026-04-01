@@ -11,7 +11,11 @@ export type MarketRow = {
   id: string;
   commodity: string;
   symbol: CommodityKey;
+  /** Quote in USD per exchange unit (oz, bbl, lb, MMBtu). */
+  priceUsd: number;
+  /** Same as priceUsd; kept for older call sites. */
   price: number;
+  unit: string;
   change24h: number;
   volume: string;
   marketCap: string;
@@ -21,6 +25,8 @@ export type MarketRow = {
 export type ChartPoint = {
   period: string;
   price: number;
+  /** Exchange volume when provided by the feed; omit if unavailable. */
+  volume?: number | null;
 };
 
 export type PortfolioHolding = {
@@ -59,20 +65,6 @@ export type PortfolioItem = {
   status: PortfolioItemStatus;
   dateAdded: string;
   notes?: string;
-};
-
-export type AiPrediction = {
-  id: string;
-  commodity: string;
-  prediction: "Bullish" | "Bearish" | "Neutral";
-  confidence: number;
-};
-
-export type AiTradingSignal = {
-  id: string;
-  commodity: string;
-  signal: "BUY" | "SELL" | "HOLD";
-  rationale: string;
 };
 
 export type NewsArticle = {

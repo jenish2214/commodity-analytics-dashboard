@@ -18,7 +18,7 @@ const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
 const SEARCH_SUGGESTIONS = [
   "Gold", "Silver", "Crude Oil", "Natural Gas", "Copper",
   "Platinum", "Palladium", "Aluminum", "Nickel", "Zinc",
-  "Market News", "Portfolio", "AI Insights", "Dashboard"
+  "Market News", "Portfolio", "Market Indices", "Dashboard"
 ];
 
 type Props = {
@@ -30,13 +30,14 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const setSearchQuery = useMarketDataStore((s) => s.setSearchQuery);
   const lastLiveUpdate = useMarketDataStore((s) => s.lastLiveUpdate);
+  const fxError = useMarketDataStore((s) => s.fxError);
+  const commoditiesFetchedAt = useMarketDataStore((s) => s.commoditiesFetchedAt);
   const name = useUserStore((s) => s.name);
   const theme = useUserStore((s) => s.theme);
   const currency = useUserStore((s) => s.currency);
   const setTheme = useUserStore((s) => s.setTheme);
   const setCurrency = useUserStore((s) => s.setCurrency);
 
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -127,10 +128,7 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
             placeholder="Search markets, commodities, news..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
             onBlur={() => {
-              setIsSearchFocused(false);
-              // Delay hiding suggestions to allow click on suggestion
               setTimeout(() => setShowSuggestions(false), 150);
             }}
             onKeyDown={handleKeyDown}
@@ -240,28 +238,30 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
         </label>
         <button
           type="button"
-          className="ca-icon-btn"
+          className="ca-icon-btn ca-topbar__theme-btn"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          style={{ marginRight: "8px" }}
         >
           {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
         </button>
-        <div className="ca-market-pill" role="status">
-          <span 
-            className="ca-market-pill__dot" 
-            aria-hidden 
-            style={{
-              backgroundColor: lastLiveUpdate > 0 ? "var(--gain)" : undefined,
-              animation: lastLiveUpdate > 0 ? "pulse 2s infinite" : undefined,
-            }}
+        <div className="ca-market-pill" role="status" title={fxError ?? undefined}>
+          <span
+            className={
+              lastLiveUpdate > 0
+                ? "ca-market-pill__dot ca-market-pill__dot--live"
+                : "ca-market-pill__dot"
+            }
+            aria-hidden
           />
-          {lastLiveUpdate > 0 ? "Live prices" : "Markets open"}
-          {lastLiveUpdate > 0 && (
-            <span style={{ fontSize: "11px", color: "var(--text-secondary)", marginLeft: "8px" }}>
-              Updated {timeAgo(new Date(lastLiveUpdate).toISOString())}
+          {lastLiveUpdate > 0 ? "Live quotes" : "Awaiting data"}
+          {lastLiveUpdate > 0 ? (
+            <span className="ca-market-pill__updated">
+              {timeAgo(new Date(lastLiveUpdate).toISOString())}
+              {commoditiesFetchedAt
+                ? ` · ${currency} via ECB FX`
+                : null}
             </span>
-          )}
+          ) : null}
         </div>
         
         {/* Actions */}

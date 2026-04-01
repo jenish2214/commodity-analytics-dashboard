@@ -17,6 +17,9 @@
   --radius-card: 12px;
   --space-card: 20px;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --bg-hover: #ebebeb;
+  --accent-subtle: rgba(0, 0, 0, 0.06);
+  --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent);
 
   /* Legacy aliases — map old variable names for gradual migration */
   --color-primary: var(--bg-primary);
@@ -42,6 +45,9 @@
   --gain: #16a34a;
   --loss: #dc2626;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.45);
+  --bg-hover: #1a1a1a;
+  --accent-subtle: rgba(255, 255, 255, 0.08);
+  --focus-ring: 0 0 0 2px var(--bg-primary), 0 0 0 4px rgba(255, 255, 255, 0.45);
 
   --color-primary: var(--text-primary);
   --color-secondary: var(--bg-card);
@@ -66,6 +72,9 @@
   --gain: #16a34a;
   --loss: #dc2626;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.45);
+  --bg-hover: #273549;
+  --accent-subtle: rgba(59, 130, 246, 0.15);
+  --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent);
 
   --color-primary: var(--text-primary);
   --color-secondary: var(--bg-card);

@@ -50,6 +50,33 @@ export const ACCENT_COLORS = [
 ] as const;
 export type AccentColorId = (typeof ACCENT_COLORS)[number]["id"];
 
+/** Single bar size row, or show every size. */
+export type GoldWeightTicketId = "10g" | "100g" | "1kg";
+export type GoldBarWeightMode = GoldWeightTicketId | "all";
+
+export function goldBarSizeVisible(
+  mode: GoldBarWeightMode,
+  id: GoldWeightTicketId
+): boolean {
+  return mode === "all" || mode === id;
+}
+
+type LegacyGoldTickets = Partial<Record<GoldWeightTicketId, boolean>>;
+
+function parsePersistedGoldBarMode(p: Record<string, unknown>): GoldBarWeightMode {
+  const m = p.goldBarWeight;
+  if (m === "10g" || m === "100g" || m === "1kg" || m === "all") {
+    return m;
+  }
+  const gw = p.goldWeightTickets as LegacyGoldTickets | undefined;
+  if (gw && typeof gw === "object") {
+    const on = (["10g", "100g", "1kg"] as const).filter((k) => gw[k]);
+    if (on.length >= 2) return "all";
+    if (on.length === 1) return on[0];
+  }
+  return "all";
+}
+
 export const REFRESH_RATES = [
   { value: 15,   label: "15 seconds" },
   { value: 30,   label: "30 seconds" },
@@ -87,6 +114,11 @@ function applyFontSize(size: FontSizeOption): void {
   if (typeof document === "undefined") return;
   const map: Record<FontSizeOption, string> = { sm: "13px", md: "15px", lg: "17px" };
   document.documentElement.style.fontSize = map[size];
+}
+
+function applyCompactMode(on: boolean): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.compact = on ? "true" : "false";
 }
 
 function syncAuxiliaryStorage(state: {
@@ -139,6 +171,8 @@ type UserPersistState = {
   twoFactor: boolean;
   // Layout
   sidebarOpen: boolean;
+  /** One gold bar tier to show, or "all" (Indian panel + gold detail). */
+  goldBarWeight: GoldBarWeightMode;
 };
 
 type UserActions = {
@@ -166,6 +200,7 @@ type UserActions = {
   // Layout
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  setGoldBarWeight: (mode: GoldBarWeightMode) => void;
   // Global
   initFromStorage: () => void;
   resetAllSettings: () => void;
@@ -203,6 +238,7 @@ const defaultState: UserPersistState = {
   sessionTimeout: 30,
   twoFactor: false,
   sidebarOpen: true,
+  goldBarWeight: "all",
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -246,7 +282,10 @@ export const useUserStore = create<UserStore>()(
         applyFontSize(size);
       },
 
-      setCompactMode: (on) => set({ compactMode: on }),
+      setCompactMode: (on) => {
+        set({ compactMode: on });
+        applyCompactMode(on);
+      },
 
       setCurrency: (currency) => {
         const currencySymbol = currencySymbolFor(currency);
@@ -278,10 +317,13 @@ export const useUserStore = create<UserStore>()(
 
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 
+      setGoldBarWeight: (mode) => set({ goldBarWeight: mode }),
+
       initFromStorage: () => {
         const st = get();
         applyThemeToDom(st.theme);
         applyFontSize(st.fontSize);
+        applyCompactMode(st.compactMode);
         const accent = ACCENT_COLORS.find((c) => c.id === st.accentColorId);
         if (accent) applyAccentColor(accent.value);
         syncAuxiliaryStorage(st);
@@ -289,8 +331,15 @@ export const useUserStore = create<UserStore>()(
 
       resetAllSettings: () => {
         try {
-          ["dashboard_settings", "dashboard_theme", "dashboard_currency",
-            "dashboard_profile", "dashboard_portfolio", "ca-dashboard-user",
+          [
+            "dashboard_settings",
+            "dashboard_theme",
+            "dashboard_currency",
+            "dashboard_profile",
+            "dashboard_portfolio",
+            "chart-preferences",
+            "ca-dashboard-user",
+            "quant-calculator",
           ].forEach((k) => localStorage.removeItem(k));
         } catch { /* */ }
         if (typeof window !== "undefined") window.location.reload();
@@ -318,26 +367,35 @@ export const useUserStore = create<UserStore>()(
         sessionTimeout: state.sessionTimeout,
         twoFactor:      state.twoFactor,
         sidebarOpen:    state.sidebarOpen,
+        goldBarWeight:  state.goldBarWeight,
       }),
       merge: (persisted, current) => {
-        const p = persisted as Partial<UserPersistState> | undefined;
+        const p = persisted as Partial<UserPersistState> & Record<string, unknown> | undefined;
         if (!p || typeof p !== "object") return current;
         const currency = (p.currency ?? current.currency) as CurrencyCode;
+        const goldBarWeight = parsePersistedGoldBarMode(p);
+        const {
+          goldWeightTickets: _legacyTickets,
+          goldBarWeight: _legacyMode,
+          ...restPersisted
+        } = p;
         return {
           ...current,
-          ...p,
+          ...restPersisted,
           currency,
           currencySymbol: currencySymbolFor(currency),
           notifications: {
             ...current.notifications,
             ...(p.notifications ?? {}),
           },
+          goldBarWeight,
         };
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         applyThemeToDom(state.theme);
         applyFontSize(state.fontSize);
+        applyCompactMode(state.compactMode);
         const accent = ACCENT_COLORS.find((c) => c.id === state.accentColorId);
         if (accent) applyAccentColor(accent.value);
         syncAuxiliaryStorage(state);

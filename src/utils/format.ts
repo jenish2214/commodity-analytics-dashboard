@@ -1,5 +1,55 @@
 import type { CurrencyCode } from "@/types/models";
 
+/**
+ * Convert a USD spot amount for display. Uses `currency` when FX exists; otherwise USD
+ * (callers should label “USD spot” when `usedUsdFallback` is true).
+ */
+export function convertUsdForDisplay(
+  amountUsd: number,
+  currency: CurrencyCode,
+  rates: Partial<Record<CurrencyCode, number>> | null | undefined
+): { amount: number; displayCurrency: CurrencyCode; usedUsdFallback: boolean } {
+  if (currency === "USD") {
+    return { amount: amountUsd, displayCurrency: "USD", usedUsdFallback: false };
+  }
+  const r = rates?.[currency];
+  if (r == null || !Number.isFinite(r) || r <= 0) {
+    return { amount: amountUsd, displayCurrency: "USD", usedUsdFallback: true };
+  }
+  return {
+    amount: amountUsd * r,
+    displayCurrency: currency,
+    usedUsdFallback: false,
+  };
+}
+
+/**
+ * Convert an amount priced in INR into the user’s currency using USD-base FX
+ * (1 USD = rates.INR rupees, etc.). Falls back to INR if INR/USD or target rate is missing.
+ */
+export function convertInrAmountToDisplay(
+  amountInr: number,
+  currency: CurrencyCode,
+  fxUsd: Partial<Record<CurrencyCode, number>> | null | undefined
+): { amount: number; displayCurrency: CurrencyCode; usedInrFallback: boolean } {
+  if (currency === "INR") {
+    return { amount: amountInr, displayCurrency: "INR", usedInrFallback: false };
+  }
+  const inrPerUsd = fxUsd?.INR;
+  if (!inrPerUsd || !Number.isFinite(inrPerUsd) || inrPerUsd <= 0) {
+    return { amount: amountInr, displayCurrency: "INR", usedInrFallback: true };
+  }
+  const usd = amountInr / inrPerUsd;
+  if (currency === "USD") {
+    return { amount: usd, displayCurrency: "USD", usedInrFallback: false };
+  }
+  const r = fxUsd?.[currency];
+  if (r == null || !Number.isFinite(r) || r <= 0) {
+    return { amount: amountInr, displayCurrency: "INR", usedInrFallback: true };
+  }
+  return { amount: usd * r, displayCurrency: currency, usedInrFallback: false };
+}
+
 const LOCALE: Record<CurrencyCode, string> = {
   USD: "en-US",
   EUR: "de-DE",

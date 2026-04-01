@@ -12,7 +12,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Commodity Analytics Dashboard",
-  description: "AI-powered FinTech commodity analytics",
+  description: "Commodity benchmarks, portfolio tools, and market analytics.",
 };
 
 export default function RootLayout({

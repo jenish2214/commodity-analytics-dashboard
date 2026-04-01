@@ -1,9 +1,11 @@
 "use client";
 
-import { AIInsightCard } from "@/components/AIInsightCard";
+import { useMemo } from "react";
 import { CommodityDetailCharts } from "@/components/CommodityDetailCharts";
+import { GoldCaratPanel } from "@/components/GoldCaratPanel";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import type { CommodityKey } from "@/types/models";
+import { lastMacd, lastRsi } from "@/utils/indicators";
 
 type Props = {
   symbol: CommodityKey;
@@ -11,22 +13,39 @@ type Props = {
 
 export function CommodityDetailView({ symbol }: Props) {
   const market = useMarketDataStore((s) => s.market);
-  const currentData = market.find(item => item.symbol === symbol);
-  
-  const detail = {
-    name: currentData?.commodity || symbol.charAt(0).toUpperCase() + symbol.slice(1),
-    rsi: 58.2, // Would be calculated from real data in production
-    macd: 0.42,
-    trend: "Uptrend" as const,
-    aiSummary: currentData ? 
-      `${currentData.commodity} shows ${currentData.change24h > 0 ? 'positive' : 'negative'} momentum with ${Math.abs(currentData.change24h).toFixed(2)}% change. Current market conditions suggest ${currentData.signal === 'BUY' ? 'bullish' : currentData.signal === 'SELL' ? 'bearish' : 'neutral'} outlook.` :
-      "Loading market data...",
-  };
+  const chartPoints = useMarketDataStore((s) => s.chartPoints);
+  const currentData = market.find((item) => item.symbol === symbol);
+
+  const closes = useMemo(() => chartPoints.map((p) => p.price), [chartPoints]);
+
+  const detail = useMemo(() => {
+    const rsiVal = lastRsi(closes, 14);
+    const macd = lastMacd(closes);
+    let trend: "Uptrend" | "Downtrend" | "Neutral" = "Neutral";
+    if (macd) {
+      if (macd.histogram > 0) trend = "Uptrend";
+      else if (macd.histogram < 0) trend = "Downtrend";
+    }
+    return {
+      rsi: rsiVal ?? null,
+      macd: macd?.histogram ?? null,
+      macdLine: macd?.line ?? null,
+      macdSignal: macd?.signal ?? null,
+      trend,
+      snapshot: currentData
+        ? `${currentData.commodity} is ${currentData.change24h > 0 ? "up" : "down"} ${Math.abs(currentData.change24h).toFixed(2)}% vs prior close. Signal: ${currentData.signal}.`
+        : "Loading market data…",
+    };
+  }, [closes, currentData]);
 
   return (
     <div className="ca-page">
-      <h1 className="ca-page__title">{detail.name}</h1>
-      <p className="ca-page__lead">Technical context and AI commentary.</p>
+      <h1 className="ca-page__title">
+        {currentData?.commodity ?? symbol.charAt(0).toUpperCase() + symbol.slice(1)}
+      </h1>
+      <p className="ca-page__lead">Technical context from the same closes as the chart (no simulated ticks).</p>
+
+      {symbol === "gold" ? <GoldCaratPanel /> : null}
 
       <div
         className="ca-stat-grid"
@@ -36,24 +55,33 @@ export function CommodityDetailView({ symbol }: Props) {
         }}
       >
         <article className="ca-card ca-stat-card">
-          <p className="ca-stat-card__label">RSI</p>
-          <p className="ca-stat-card__value">{detail.rsi.toFixed(1)}</p>
+          <p className="ca-stat-card__label">RSI (14)</p>
+          <p className="ca-stat-card__value">
+            {detail.rsi != null ? detail.rsi.toFixed(1) : "—"}
+          </p>
         </article>
         <article className="ca-card ca-stat-card">
-          <p className="ca-stat-card__label">MACD</p>
-          <p className="ca-stat-card__value">{detail.macd.toFixed(2)}</p>
+          <p className="ca-stat-card__label">MACD histogram</p>
+          <p className="ca-stat-card__value">
+            {detail.macd != null ? detail.macd.toFixed(4) : "—"}
+          </p>
         </article>
         <article className="ca-card ca-stat-card">
-          <p className="ca-stat-card__label">Trend signal</p>
+          <p className="ca-stat-card__label">Trend (MACD)</p>
           <p className="ca-stat-card__value">{detail.trend}</p>
         </article>
       </div>
 
       <CommodityDetailCharts symbol={symbol} />
 
-      <div style={{ marginTop: "1rem" }}>
-        <AIInsightCard title="AI Insights" body={detail.aiSummary} />
-      </div>
+      <article className="ca-card" style={{ marginTop: "1rem" }}>
+        <p className="ca-stat-card__label" style={{ marginBottom: "0.5rem" }}>
+          Market snapshot
+        </p>
+        <p style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.55, color: "var(--text-primary)" }}>
+          {detail.snapshot}
+        </p>
+      </article>
     </div>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TrendingUp, TrendingDown, Activity, BarChart3, Settings, Maximize2, Minimize2 } from "lucide-react";
 import { useMarketDataStore } from "@/store/marketDataStore";
-import type { ChartPoint, CommodityKey, TimeRange } from "@/types/models";
+import { useUserStore } from "@/store/userStore";
+import type { CommodityKey, TimeRange } from "@/types/models";
+import { convertUsdForDisplay, formatCurrencyAmount, formatPercent } from "@/utils/format";
 
 interface TradingViewProps {
   symbol?: CommodityKey;
@@ -23,29 +25,27 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
     chartPoints,
     selectedSymbol,
     timeRange,
-    setSelectedSymbol,
     setTimeRange,
-    fetchChart,
-    loading
+    setChartContext,
+    loading,
+    fxRates,
   } = useMarketDataStore();
+  const currency = useUserStore((s) => s.currency);
 
   const currentSymbol = propSymbol || selectedSymbol;
   const currentData = market.find(item => item.symbol === currentSymbol);
 
   useEffect(() => {
-    if (currentSymbol) {
-      setSelectedSymbol(currentSymbol);
-      fetchChart();
+    try {
+      if (currentSymbol) {
+        setChartContext(currentSymbol, timeRange);
+      }
+    } catch (e) {
+      console.error("TradingView chart sync:", e);
     }
-  }, [currentSymbol, setSelectedSymbol, fetchChart]);
+  }, [currentSymbol, timeRange, setChartContext]);
 
-  useEffect(() => {
-    if (chartPoints.length > 0 && canvasRef.current) {
-      drawChart();
-    }
-  }, [chartPoints, timeRange]);
-
-  const drawChart = () => {
+  const drawChart = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -62,11 +62,15 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
 
     if (chartPoints.length === 0) return;
 
-    // Find min and max values for scaling
-    const prices = chartPoints.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    const { displayCurrency: axisCurrency } = convertUsdForDisplay(1, currency, fxRates);
+
+    const displayPrices = chartPoints.map((p) =>
+      convertUsdForDisplay(p.price, currency, fxRates).amount
+    );
+    const minPrice = Math.min(...displayPrices);
+    const maxPrice = Math.max(...displayPrices);
     const priceRange = maxPrice - minPrice || 1;
+    const xDenom = Math.max(1, chartPoints.length - 1);
 
     const padding = { top: 20, right: 20, bottom: 40, left: 60 };
     const chartWidth = rect.width - padding.left - padding.right;
@@ -90,11 +94,10 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
       ctx.fillStyle = 'var(--text-secondary)';
       ctx.font = '11px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(price.toFixed(2), padding.left - 10, y + 4);
+      ctx.fillText(formatCurrencyAmount(price, axisCurrency), padding.left - 10, y + 4);
     }
 
     // Vertical grid lines
-    const pointCount = chartPoints.length;
     for (let i = 0; i <= 4; i++) {
       const x = padding.left + (chartWidth / 4) * i;
       ctx.beginPath();
@@ -111,8 +114,9 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
     ctx.beginPath();
 
     chartPoints.forEach((point, index) => {
-      const x = padding.left + (chartWidth / (pointCount - 1)) * index;
-      const y = padding.top + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+      const dp = displayPrices[index] ?? point.price;
+      const x = padding.left + (chartWidth / xDenom) * index;
+      const y = padding.top + chartHeight - ((dp - minPrice) / priceRange) * chartHeight;
 
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -136,8 +140,9 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
     ctx.fillStyle = gradient;
     ctx.beginPath();
     chartPoints.forEach((point, index) => {
-      const x = padding.left + (chartWidth / (pointCount - 1)) * index;
-      const y = padding.top + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+      const dp = displayPrices[index] ?? point.price;
+      const x = padding.left + (chartWidth / xDenom) * index;
+      const y = padding.top + chartHeight - ((dp - minPrice) / priceRange) * chartHeight;
 
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -153,14 +158,30 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
     // Draw data points
     ctx.fillStyle = (currentData?.change24h ?? 0) >= 0 ? 'var(--gain)' : 'var(--loss)';
     chartPoints.forEach((point, index) => {
-      const x = padding.left + (chartWidth / (pointCount - 1)) * index;
-      const y = padding.top + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
-      
+      const dp = displayPrices[index] ?? point.price;
+      const x = padding.left + (chartWidth / xDenom) * index;
+      const y = padding.top + chartHeight - ((dp - minPrice) / priceRange) * chartHeight;
+
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     });
-  };
+  }, [chartPoints, currency, fxRates, currentData?.change24h]);
+
+  useEffect(() => {
+    if (loading || chartPoints.length === 0) return;
+    const id = requestAnimationFrame(() => drawChart());
+    return () => cancelAnimationFrame(id);
+  }, [
+    drawChart,
+    loading,
+    chartPoints,
+    timeRange,
+    currency,
+    fxRates,
+    isFullscreen,
+    showFullChart,
+  ]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -180,8 +201,8 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
     );
   }
 
-  const changePercent = currentData.change24h ? ((currentData.change24h / currentData.price) * 100).toFixed(2) : '0.00';
   const isPositive = (currentData.change24h ?? 0) >= 0;
+  const conv = convertUsdForDisplay(currentData.priceUsd, currency, fxRates);
 
   return (
     <div 
@@ -216,8 +237,21 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
             <span style={{ fontSize: '2rem', fontWeight: 700 }}>
-              ${currentData.price.toFixed(2)}
+              {formatCurrencyAmount(conv.amount, conv.displayCurrency)}
             </span>
+            {conv.usedUsdFallback ? (
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                  color: "var(--text-secondary)",
+                  marginTop: "0.25rem",
+                }}
+              >
+                USD spot — FX unavailable
+              </span>
+            ) : null}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -228,9 +262,7 @@ export function TradingView({ symbol: propSymbol, showFullChart = false }: Tradi
               color: isPositive ? 'var(--gain)' : 'var(--loss)',
             }}>
               {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              <span style={{ fontWeight: 600 }}>
-                {isPositive ? '+' : ''}{currentData.change24h.toFixed(2)} ({isPositive ? '+' : ''}{changePercent}%)
-              </span>
+              <span style={{ fontWeight: 600 }}>{formatPercent(currentData.change24h)}</span>
             </div>
           </div>
         </div>

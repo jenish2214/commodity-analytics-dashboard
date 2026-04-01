@@ -57,16 +57,16 @@ export function DashboardView() {
     <div className="ca-page">
       <h1 className="ca-page__title">Commodity Market Overview</h1>
       <p className="ca-page__lead">
-        Benchmarks, flows, and AI-assisted market sentiment.
+        Benchmarks, flows, and intraday market context.
       </p>
       {loading && market.length === 0 ? (
-        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
-          <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
-             {[1, 2, 3, 4].map(i => (
-               <div key={i} style={{ height: '104px', borderRadius: '12px', background: 'var(--bg-hover)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-             ))}
+        <div className="ca-dashboard-skeleton" aria-busy="true" aria-label="Loading market data">
+          <div className="ca-stat-grid">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="ca-skeleton ca-skeleton--stat" />
+            ))}
           </div>
-          <div style={{ height: '400px', borderRadius: '12px', background: 'var(--bg-hover)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+          <div className="ca-skeleton ca-skeleton--chart" />
         </div>
       ) : (
         <>

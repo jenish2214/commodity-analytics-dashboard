@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNavbar } from "@/components/layout/TopNavbar";
+import { MarketSessionStrip } from "@/components/layout/MarketSessionStrip";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { useUserStore } from "@/store/userStore";
 
@@ -42,14 +43,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isSettings && <Sidebar />}
       <div
         className="ca-main"
+        data-settings={isSettings ? "true" : "false"}
         data-sidebar-open={sidebarOpen ? "true" : "false"}
-        style={{
-          marginLeft: isSettings ? 0 : (sidebarOpen ? 0 : 0),
-          transition: "margin-left 300ms cubic-bezier(0.4,0,0.2,1)",
-          width: isSettings ? "100%" : undefined,
-        }}
+        style={{ width: isSettings ? "100%" : undefined }}
       >
         <TopNavbar onMenuClick={toggleSidebar} menuOpen={sidebarOpen} />
+        {!isSettings ? <MarketSessionStrip /> : null}
         {children}
         <BottomNav />
       </div>

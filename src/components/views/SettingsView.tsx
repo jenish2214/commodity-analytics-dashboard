@@ -1,36 +1,53 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  User, Palette, Bell, BarChart2, Shield, AlertTriangle,
-  Camera, Moon, Sun, Check, ChevronDown, Globe, Clock,
-  RefreshCw, KeyRound, LogOut, Download, Trash2, X,
-  Mail, Smartphone, TrendingUp, Newspaper, FileText, ArrowLeft
+  User,
+  Palette,
+  Bell,
+  BarChart2,
+  Shield,
+  Camera,
+  Check,
+  ChevronDown,
+  Globe,
+  Clock,
+  RefreshCw,
+  KeyRound,
+  LogOut,
+  Download,
+  Trash2,
+  X,
+  Mail,
+  Smartphone,
+  TrendingUp,
+  Newspaper,
+  FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
 import { useChartPreferencesStore } from "@/store/chartPreferencesStore";
+import { usePortfolioStore } from "@/store/portfolioStore";
 import type { CurrencyCode } from "@/types/models";
 import {
-  ACCENT_COLORS, FONT_SIZES, LANGUAGES, REFRESH_RATES,
-  SESSION_TIMEOUTS, TIMEZONES,
-  type AccentColorId, type FontSizeOption,
-  type LanguageCode, type Timezone,
+  ACCENT_COLORS,
+  FONT_SIZES,
+  LANGUAGES,
+  REFRESH_RATES,
+  SESSION_TIMEOUTS,
+  TIMEZONES,
+  type AccentColorId,
+  type FontSizeOption,
+  type LanguageCode,
+  type Timezone,
 } from "@/store/userStore";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import s from "./SettingsView.module.css";
 
 type TabId = "profile" | "appearance" | "notifications" | "data" | "security";
 
-interface Tab {
-  id: TabId;
-  label: string;
-  icon: React.ReactNode;
-}
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const TABS: Tab[] = [
+const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "profile", label: "Profile", icon: <User size={16} /> },
   { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
   { id: "notifications", label: "Notifications", icon: <Bell size={16} /> },
@@ -62,37 +79,6 @@ const INDICATOR_OPTIONS = [
   { value: "bollinger", label: "Bollinger Bands" },
 ];
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-function SettingsCard({ children, danger }: { children: React.ReactNode; danger?: boolean }) {
-  return (
-    <div style={{
-      background: "var(--bg-card)",
-      border: `1px solid ${danger ? "rgba(239,68,68,.3)" : "var(--border)"}`,
-      borderRadius: "12px",
-      padding: "24px",
-      marginBottom: "16px",
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 style={{
-      fontSize: "11px",
-      fontWeight: 700,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      color: "var(--text-secondary)",
-      marginBottom: "20px",
-    }}>
-      {children}
-    </h3>
-  );
-}
-
 function Toggle({ on, onChange, id }: { on: boolean; onChange: (v: boolean) => void; id?: string }) {
   return (
     <button
@@ -101,54 +87,19 @@ function Toggle({ on, onChange, id }: { on: boolean; onChange: (v: boolean) => v
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      style={{
-        width: "44px", height: "24px", borderRadius: "12px", flexShrink: 0,
-        background: on ? "var(--accent)" : "var(--border)",
-        border: "none", cursor: "pointer", position: "relative",
-        transition: "background 200ms ease",
-      }}
+      className={`${s.toggle} ${on ? s.toggleOn : ""}`}
     >
-      <span style={{
-        display: "block",
-        width: "18px", height: "18px", borderRadius: "50%",
-        background: "white",
-        position: "absolute", top: "3px",
-        left: on ? "23px" : "3px",
-        transition: "left 200ms cubic-bezier(.4,0,.2,1)",
-        boxShadow: "0 1px 3px rgba(0,0,0,.3)",
-      }} />
+      <span className={`${s.knob} ${on ? s.knobOn : ""}`} />
     </button>
   );
 }
 
-function NotificationRow({
-  icon, label, desc, checked, onChange,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  desc: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "14px 0", borderBottom: "1px solid var(--border)",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ color: "var(--accent)" }}>{icon}</span>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: "14px" }}>{label}</div>
-          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>{desc}</div>
-        </div>
-      </div>
-      <Toggle on={checked} onChange={onChange} />
-    </div>
-  );
-}
-
 function SelectField<T extends string>({
-  label, value, options, onChange, icon,
+  label,
+  value,
+  options,
+  onChange,
+  icon,
 }: {
   label: string;
   value: T;
@@ -157,99 +108,119 @@ function SelectField<T extends string>({
   icon?: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-      <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)" }}>
-        {icon && <span style={{ marginRight: "6px", verticalAlign: "middle" }}>{icon}</span>}
+    <div className={s.fieldCol}>
+      <span className={s.label}>
+        {icon ? <span style={{ marginRight: 6, verticalAlign: "middle" }}>{icon}</span> : null}
         {label}
-      </label>
-      <div style={{ position: "relative" }}>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value as T)}
-          style={{
-            width: "100%", padding: "10px 36px 10px 12px",
-            borderRadius: "8px", border: "1px solid var(--border)",
-            background: "var(--bg-primary)", color: "var(--text-primary)",
-            fontSize: "14px", fontFamily: "inherit", cursor: "pointer",
-            appearance: "none", outline: "none",
-          }}
-        >
+      </span>
+      <div className={s.selectWrap}>
+        <select className={s.select} value={value} onChange={(e) => onChange(e.target.value as T)}>
           {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
           ))}
         </select>
-        <ChevronDown size={14} style={{
-          position: "absolute", right: "12px", top: "50%",
-          transform: "translateY(-50%)", pointerEvents: "none",
-          color: "var(--text-secondary)",
-        }} />
+        <ChevronDown size={14} className={s.chevron} aria-hidden />
       </div>
     </div>
   );
 }
 
 function InputField({
-  id, label, value, onChange, type = "text", placeholder, maxLength,
+  id,
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  maxLength,
 }: {
-  id: string; label: string; value: string;
-  onChange: (v: string) => void; type?: string;
-  placeholder?: string; maxLength?: number;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  maxLength?: number;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-      <label htmlFor={id} style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)" }}>
+    <div className={s.fieldCol}>
+      <label htmlFor={id} className={s.label}>
         {label}
       </label>
       <input
-        id={id} type={type} value={value} placeholder={placeholder ?? ""}
+        id={id}
+        type={type}
+        value={value}
+        placeholder={placeholder ?? ""}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          padding: "10px 12px", borderRadius: "8px",
-          border: "1px solid var(--border)", background: "var(--bg-primary)",
-          color: "var(--text-primary)", fontSize: "14px", fontFamily: "inherit",
-          outline: "none", width: "100%",
-        }}
+        className={s.input}
       />
     </div>
   );
 }
 
-function PrimaryButton({ onClick, children, loading }: {
-  onClick: () => void; children: React.ReactNode; loading?: boolean;
-}) {
-  return (
-    <button
-      type="button" onClick={onClick} disabled={loading}
-      style={{
-        padding: "10px 20px", borderRadius: "8px",
-        background: "var(--accent)", color: "white",
-        border: "none", fontSize: "14px", fontWeight: 600,
-        cursor: loading ? "not-allowed" : "pointer",
-        fontFamily: "inherit", opacity: loading ? 0.7 : 1,
-        display: "flex", alignItems: "center", gap: "6px",
-        transition: "opacity 150ms",
-      }}
-    >
-      {children}
-    </button>
-  );
+function exportDashboardData(): void {
+  const user = useUserStore.getState();
+  const portfolio = usePortfolioStore.getState();
+  const charts = useChartPreferencesStore.getState();
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    profile: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      bio: user.bio,
+      timezone: user.timezone,
+      language: user.language,
+      currency: user.currency,
+      theme: user.theme,
+      accentColorId: user.accentColorId,
+      fontSize: user.fontSize,
+      compactMode: user.compactMode,
+      notifications: user.notifications,
+      refreshRate: user.refreshRate,
+      sessionTimeout: user.sessionTimeout,
+      twoFactor: user.twoFactor,
+    },
+    chartDefaults: charts.preferences,
+    portfolio: {
+      items: portfolio.items,
+      holdings: portfolio.holdings,
+      allocation: portfolio.allocation,
+      totals: portfolio.totals,
+    },
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `metals-dashboard-export-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-// ─── Profile Tab ─────────────────────────────────────────────────────────────
-
 function ProfileTab() {
-  const { name, email, phone, bio, avatar, timezone, language,
-    updateProfile, setAvatar, setTimezone, setLanguage } = useUserStore();
+  const { name, email, phone, bio, avatar, timezone, language, updateProfile, setAvatar, setTimezone, setLanguage } =
+    useUserStore();
 
   const [local, setLocal] = useState({ name, email, phone, bio });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setLocal({ name, email, phone, bio }); }, [name, email, phone, bio]);
+  useEffect(() => {
+    setLocal({ name, email, phone, bio });
+  }, [name, email, phone, bio]);
 
-  const initials = name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  const initials = name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const handleSave = () => {
     setSaving(true);
@@ -258,13 +229,16 @@ function ProfileTab() {
       setSaving(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    }, 600);
+    }, 500);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) return alert("Avatar must be under 2 MB");
+    if (file.size > 2 * 1024 * 1024) {
+      window.alert("Avatar must be under 2 MB.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setAvatar(reader.result as string);
     reader.readAsDataURL(file);
@@ -272,118 +246,113 @@ function ProfileTab() {
 
   return (
     <>
-      <SettingsCard>
-        <SectionTitle>Personal Information</SectionTitle>
-        {/* Avatar */}
-        <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "28px" }}>
-          <div style={{ position: "relative", flexShrink: 0 }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Personal information</h3>
+        <div className={s.avatarBlock}>
+          <div className={s.avatarRing}>
             {avatar ? (
-              <img src={avatar} alt="avatar" style={{
-                width: "72px", height: "72px", borderRadius: "50%",
-                objectFit: "cover", border: "3px solid var(--accent)",
-              }} />
+              <Image
+                src={avatar}
+                alt=""
+                width={72}
+                height={72}
+                unoptimized
+                className={s.avatarImg}
+              />
             ) : (
-              <div style={{
-                width: "72px", height: "72px", borderRadius: "50%",
-                background: "var(--accent)", color: "white",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "22px", fontWeight: 700,
-                border: "3px solid var(--accent)",
-              }}>
-                {initials}
-              </div>
+              <div className={s.avatarFallback}>{initials}</div>
             )}
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              title="Upload avatar"
-              style={{
-                position: "absolute", bottom: "-2px", right: "-2px",
-                width: "26px", height: "26px", borderRadius: "50%",
-                background: "var(--bg-card)", border: "2px solid var(--border)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", color: "var(--accent)",
-              }}
-            >
+            <button type="button" className={s.avatarEdit} onClick={() => fileRef.current?.click()} title="Upload photo">
               <Camera size={13} />
             </button>
-            <input ref={fileRef} type="file" accept="image/*"
-              style={{ display: "none" }} onChange={handleAvatarChange} />
+            <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: "16px" }}>{name}</div>
-            <div style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "2px" }}>{email}</div>
-            {avatar && (
-              <button type="button" onClick={() => setAvatar(null)} style={{
-                marginTop: "6px", fontSize: "12px", color: "var(--text-secondary)",
-                background: "none", border: "none", cursor: "pointer",
-                fontFamily: "inherit", padding: 0,
-                display: "flex", alignItems: "center", gap: "4px",
-              }}>
-                <X size={11} /> Remove photo
+            <div className={s.avatarMetaName}>{name}</div>
+            <div className={s.avatarMetaEmail}>{email}</div>
+            {avatar ? (
+              <button type="button" className={s.linkMute} onClick={() => setAvatar(null)}>
+                <X size={11} aria-hidden /> Remove photo
               </button>
-            )}
+            ) : null}
           </div>
         </div>
 
         <div className="ca-grid-2">
-          <InputField id="s-name" label="Full Name" value={local.name} onChange={(v) => setLocal({ ...local, name: v })} />
-          <InputField id="s-email" label="Email" value={local.email} onChange={(v) => setLocal({ ...local, email: v })} type="email" />
-          <InputField id="s-phone" label="Phone" value={local.phone} onChange={(v) => setLocal({ ...local, phone: v })} placeholder="+1 555 000 0000" />
+          <InputField id="s-name" label="Full name" value={local.name} onChange={(v) => setLocal({ ...local, name: v })} />
+          <InputField
+            id="s-email"
+            label="Email"
+            value={local.email}
+            onChange={(v) => setLocal({ ...local, email: v })}
+            type="email"
+          />
+          <InputField
+            id="s-phone"
+            label="Phone"
+            value={local.phone}
+            onChange={(v) => setLocal({ ...local, phone: v })}
+            placeholder="+1 555 000 0000"
+          />
         </div>
 
-        <div style={{ marginTop: "16px" }}>
-          <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>
+        <div style={{ marginTop: "1rem" }}>
+          <label htmlFor="s-bio" className={s.label}>
             Bio
           </label>
           <textarea
-            id="s-bio" value={local.bio} maxLength={200}
-            placeholder="A short bio about yourself…"
+            id="s-bio"
+            value={local.bio}
+            maxLength={200}
+            placeholder="Short professional bio…"
             onChange={(e) => setLocal({ ...local, bio: e.target.value })}
             rows={3}
-            style={{
-              width: "100%", padding: "10px 12px", borderRadius: "8px",
-              border: "1px solid var(--border)", background: "var(--bg-primary)",
-              color: "var(--text-primary)", fontSize: "14px", fontFamily: "inherit",
-              resize: "vertical", outline: "none",
-            }}
+            className={s.textarea}
           />
-          <div style={{ fontSize: "11px", color: "var(--text-secondary)", textAlign: "right", marginTop: "4px" }}>
-            {local.bio.length}/200
-          </div>
+          <div className={s.bioCount}>{local.bio.length}/200</div>
         </div>
 
-        <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
-          <PrimaryButton onClick={handleSave} loading={saving}>
-            {saved ? <><Check size={14} /> Saved</> : saving ? "Saving…" : "Save Profile"}
-          </PrimaryButton>
+        <div className={s.rowEnd}>
+          <button type="button" className={s.primaryBtn} onClick={handleSave} disabled={saving}>
+            {saved ? (
+              <>
+                <Check size={14} /> Saved
+              </>
+            ) : saving ? (
+              "Saving…"
+            ) : (
+              "Save profile"
+            )}
+          </button>
         </div>
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Localisation</SectionTitle>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Localisation</h3>
         <div className="ca-grid-2">
           <SelectField<Timezone>
-            label="Timezone" value={timezone}
-            options={TIMEZONES.map((t) => ({ value: t, label: t.replace("_", " ") }))}
-            onChange={setTimezone} icon={<Clock size={13} />}
+            label="Timezone"
+            value={timezone}
+            options={TIMEZONES.map((t) => ({ value: t, label: t.replace(/_/g, " ") }))}
+            onChange={setTimezone}
+            icon={<Clock size={13} />}
           />
           <SelectField<LanguageCode>
-            label="Language" value={language}
+            label="Language"
+            value={language}
             options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-            onChange={setLanguage} icon={<Globe size={13} />}
+            onChange={setLanguage}
+            icon={<Globe size={13} />}
           />
         </div>
-      </SettingsCard>
+      </div>
     </>
   );
 }
 
-// ─── Appearance Tab ───────────────────────────────────────────────────────────
-
 function AppearanceTab() {
-  const { theme, accentColorId, fontSize, compactMode, currency,
-    setTheme, setAccentColor, setFontSize, setCompactMode, setCurrency } = useUserStore();
+  const { theme, accentColorId, fontSize, compactMode, currency, setTheme, setAccentColor, setFontSize, setCompactMode, setCurrency } =
+    useUserStore();
 
   const themeOptions: { id: "dark" | "light" | "navy"; label: string; bg: string; fg: string; border: string }[] = [
     { id: "dark", label: "Dark", bg: "#0f172a", fg: "#f8fafc", border: "#334155" },
@@ -393,193 +362,196 @@ function AppearanceTab() {
 
   return (
     <>
-      <SettingsCard>
-        <SectionTitle>Theme</SectionTitle>
-        <div className="ca-grid-3">
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Theme</h3>
+        <div className={s.themeGrid}>
           {themeOptions.map((t) => {
             const active = theme === t.id;
             return (
               <button
-                key={t.id} type="button" onClick={() => setTheme(t.id)}
-                style={{
-                  padding: "20px 16px", borderRadius: "10px",
-                  border: `2px solid ${active ? "var(--accent)" : t.border}`,
-                  background: t.bg, color: t.fg,
-                  cursor: "pointer", fontFamily: "inherit",
-                  display: "flex", flexDirection: "column",
-                  alignItems: "center", gap: "10px",
-                  transition: "border-color 150ms, box-shadow 150ms",
-                  boxShadow: active ? "0 0 0 3px var(--accent)22" : "none",
-                }}
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id)}
+                className={`${s.themeBtn} ${active ? s.themeBtnActive : ""}`}
+                style={{ background: t.bg, color: t.fg, borderColor: active ? "var(--accent)" : t.border }}
               >
-                <div style={{
-                  width: "40px", height: "28px", borderRadius: "5px",
-                  background: t.bg, border: `1px solid ${t.border}`,
-                  display: "flex", gap: "4px", padding: "6px",
-                }}>
-                  <div style={{ flex: 1, background: t.border, borderRadius: "2px" }} />
-                  <div style={{ flex: 2, background: t.fg + "22", borderRadius: "2px" }} />
+                <div
+                  className={s.themePreview}
+                  style={{ background: t.bg, borderColor: t.border, border: `1px solid ${t.border}` }}
+                >
+                  <span style={{ flex: 1, background: t.border, borderRadius: 2 }} />
+                  <span style={{ flex: 2, background: `${t.fg}22`, borderRadius: 2 }} />
                 </div>
-                <span style={{ fontWeight: 600, fontSize: "13px" }}>{t.label}</span>
-                {active && <Check size={14} style={{ color: "var(--accent)" }} />}
+                <span style={{ fontWeight: 600, fontSize: "0.8125rem" }}>{t.label}</span>
+                {active ? <Check size={14} color="var(--accent)" /> : null}
               </button>
             );
           })}
         </div>
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Accent Colour</SectionTitle>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Accent colour</h3>
+        <div className={s.accentRow}>
           {ACCENT_COLORS.map((c) => {
             const active = accentColorId === c.id;
             return (
               <button
-                key={c.id} type="button" onClick={() => setAccentColor(c.id as AccentColorId)}
+                key={c.id}
+                type="button"
+                onClick={() => setAccentColor(c.id as AccentColorId)}
                 title={c.id}
-                style={{
-                  width: "36px", height: "36px", borderRadius: "50%",
-                  background: c.value, border: `3px solid ${active ? "white" : "transparent"}`,
-                  cursor: "pointer",
-                  outline: active ? `3px solid ${c.value}` : "none",
-                  outlineOffset: "2px",
-                  transition: "outline 150ms",
-                }}
+                className={`${s.accentDot} ${active ? s.accentDotActive : ""}`}
+                style={{ background: c.value }}
               />
             );
           })}
         </div>
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Display Options</SectionTitle>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Display</h3>
         <div className="ca-grid-2">
           <div>
-            <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-secondary)", marginBottom: "12px" }}>
-              Font Size
+            <div className={s.label} style={{ marginBottom: "0.65rem" }}>
+              Font size
             </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              {FONT_SIZES.map((s) => {
+            <div className={s.fontRow}>
+              {FONT_SIZES.map((sz) => {
                 const labels: Record<string, string> = { sm: "Small", md: "Medium", lg: "Large" };
-                const active = fontSize === s;
+                const active = fontSize === sz;
                 return (
                   <button
-                    key={s} type="button" onClick={() => setFontSize(s as FontSizeOption)}
-                    style={{
-                      flex: 1, padding: "8px", borderRadius: "8px",
-                      border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                      background: active ? "var(--accent)15" : "var(--bg-primary)",
-                      color: active ? "var(--accent)" : "var(--text-primary)",
-                      fontWeight: active ? 700 : 400, fontSize: "13px",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
+                    key={sz}
+                    type="button"
+                    onClick={() => setFontSize(sz as FontSizeOption)}
+                    className={`${s.fontChip} ${active ? s.fontChipActive : ""}`}
                   >
-                    {labels[s]}
+                    {labels[sz]}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className={s.inlineToggleRow}>
             <div>
-              <div style={{ fontWeight: 600, fontSize: "14px" }}>Compact Mode</div>
-              <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>
-                Reduce spacing throughout the UI
-              </div>
+              <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)" }}>Compact mode</div>
+              <div className={s.notifDesc}>Tighter spacing across the dashboard</div>
             </div>
             <Toggle on={compactMode} onChange={setCompactMode} />
           </div>
         </div>
 
-        <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
+        <div style={{ marginTop: "1.15rem", paddingTop: "1.15rem", borderTop: "1px solid var(--border)" }}>
           <SelectField<CurrencyCode>
-            label="Default Currency"
+            label="Default currency"
             value={currency}
             options={CURRENCY_OPTIONS.map((c) => ({ value: c.code, label: c.label }))}
             onChange={setCurrency}
           />
         </div>
-      </SettingsCard>
+      </div>
     </>
   );
 }
 
-// ─── Notifications Tab ────────────────────────────────────────────────────────
+function NotificationRow({
+  icon,
+  label,
+  desc,
+  checked,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className={s.notifRow}>
+      <div className={s.notifLeft}>
+        <span className={s.notifIcon}>{icon}</span>
+        <div>
+          <div className={s.notifLabel}>{label}</div>
+          <div className={s.notifDesc}>{desc}</div>
+        </div>
+      </div>
+      <Toggle on={checked} onChange={onChange} />
+    </div>
+  );
+}
 
 function NotificationsTab() {
   const { notifications, toggleNotification, setNotificationFrequency } = useUserStore();
 
   return (
     <>
-      <SettingsCard>
-        <SectionTitle>Channels</SectionTitle>
-        <NotificationRow
-          icon={<Mail size={16} />} label="Email Alerts"
-          desc="Receive alerts and summaries to your inbox"
-          checked={notifications.email}
-          onChange={() => toggleNotification("email")}
-        />
-        <NotificationRow
-          icon={<Smartphone size={16} />} label="Push Notifications"
-          desc="Instant alerts to your browser or device"
-          checked={notifications.push}
-          onChange={() => toggleNotification("push")}
-        />
-        <NotificationRow
-          icon={<TrendingUp size={16} />} label="Price Alerts"
-          desc="Notify when a tracked commodity hits your target"
-          checked={notifications.priceAlerts}
-          onChange={() => toggleNotification("priceAlerts")}
-        />
-        <NotificationRow
-          icon={<Newspaper size={16} />} label="News Digest"
-          desc="Curated daily market news to your inbox"
-          checked={notifications.newsDigest}
-          onChange={() => toggleNotification("newsDigest")}
-        />
-        <div style={{ paddingTop: "14px" }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Channels</h3>
+        <div className={s.pillStack}>
           <NotificationRow
-            icon={<FileText size={16} />} label="Weekly Report"
-            desc="Portfolio performance email every Monday"
+            icon={<Mail size={16} />}
+            label="Email alerts"
+            desc="Summaries and notable moves in your inbox"
+            checked={notifications.email}
+            onChange={() => toggleNotification("email")}
+          />
+          <NotificationRow
+            icon={<Smartphone size={16} />}
+            label="Push notifications"
+            desc="Browser notifications while the app is open"
+            checked={notifications.push}
+            onChange={() => toggleNotification("push")}
+          />
+          <NotificationRow
+            icon={<TrendingUp size={16} />}
+            label="Price alerts"
+            desc="When tracked markets cross your thresholds"
+            checked={notifications.priceAlerts}
+            onChange={() => toggleNotification("priceAlerts")}
+          />
+          <NotificationRow
+            icon={<Newspaper size={16} />}
+            label="News digest"
+            desc="Periodic headlines bundle"
+            checked={notifications.newsDigest}
+            onChange={() => toggleNotification("newsDigest")}
+          />
+          <NotificationRow
+            icon={<FileText size={16} />}
+            label="Weekly report"
+            desc="Portfolio snapshot by email"
             checked={notifications.weeklyReport}
             onChange={() => toggleNotification("weeklyReport")}
           />
         </div>
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Alert Frequency</SectionTitle>
-        <div className="ca-grid-3" style={{ gap: "8px" }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Alert frequency</h3>
+        <div className={s.freqGrid}>
           {(["realtime", "hourly", "daily"] as const).map((f) => {
             const labels: Record<string, string> = { realtime: "Real-time", hourly: "Hourly", daily: "Daily" };
             const active = notifications.frequency === f;
             return (
               <button
-                key={f} type="button"
+                key={f}
+                type="button"
                 onClick={() => setNotificationFrequency(f)}
-                style={{
-                  padding: "10px", borderRadius: "8px",
-                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                  background: active ? "var(--accent)15" : "var(--bg-primary)",
-                  color: active ? "var(--accent)" : "var(--text-primary)",
-                  fontWeight: active ? 700 : 400, fontSize: "13px",
-                  cursor: "pointer", fontFamily: "inherit",
-                  transition: "all 150ms",
-                }}
+                className={`${s.freqBtn} ${active ? s.freqBtnActive : ""}`}
               >
                 {labels[f]}
-                {active && <Check size={12} style={{ marginLeft: "6px", verticalAlign: "text-bottom" }} />}
+                {active ? <Check size={12} style={{ marginLeft: 6, verticalAlign: "middle" }} /> : null}
               </button>
             );
           })}
         </div>
-      </SettingsCard>
+      </div>
     </>
   );
 }
-
-// ─── Data & Markets Tab ───────────────────────────────────────────────────────
 
 function DataTab() {
   const { refreshRate, setRefreshRate } = useUserStore();
@@ -588,47 +560,43 @@ function DataTab() {
 
   return (
     <>
-      <SettingsCard>
-        <SectionTitle>Live Data</SectionTitle>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Live data</h3>
         <SelectField<string>
-          label="Data Refresh Rate"
+          label="Price refresh interval"
           value={String(refreshRate)}
           options={REFRESH_RATES.map((r) => ({ value: String(r.value), label: r.label }))}
           onChange={(v) => setRefreshRate(Number(v))}
           icon={<RefreshCw size={13} />}
         />
-      </SettingsCard>
+        <p className={s.mutedSmall} style={{ marginTop: "0.75rem", marginBottom: 0 }}>
+          Controls how often live commodity quotes poll in the background (minimum 5 seconds).
+        </p>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Chart Defaults</SectionTitle>
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Chart defaults</h3>
+        <div className={s.pillStack}>
           <SelectField<string>
-            label="Default Chart Type"
+            label="Default chart type"
             value={preferences.chartType}
             options={CHART_TYPE_OPTIONS}
             onChange={(v) => setChartType(v as "line" | "area" | "candlestick")}
           />
 
           <div>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "10px" }}>
-              Technical Indicators
+            <div className={s.label} style={{ marginBottom: "0.5rem" }}>
+              Technical indicators
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <div className={s.indicators}>
               {INDICATOR_OPTIONS.map((ind) => {
                 const active = preferences.indicators.includes(ind.value as never);
                 return (
                   <button
-                    key={ind.value} type="button"
+                    key={ind.value}
+                    type="button"
                     onClick={() => toggleIndicator(ind.value as never)}
-                    style={{
-                      padding: "6px 14px", borderRadius: "20px",
-                      border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                      background: active ? "var(--accent)" : "var(--bg-primary)",
-                      color: active ? "white" : "var(--text-primary)",
-                      fontSize: "12px", fontWeight: active ? 700 : 400,
-                      cursor: "pointer", fontFamily: "inherit",
-                      transition: "all 150ms",
-                    }}
+                    className={`${s.indChip} ${active ? s.indChipActive : ""}`}
                   >
                     {ind.label}
                   </button>
@@ -639,174 +607,138 @@ function DataTab() {
 
           <div className="ca-grid-3">
             {[
-              { label: "Show Grid", checked: preferences.showGrid, fn: setShowGrid },
-              { label: "Show Volume", checked: preferences.showVolume, fn: setShowVolume },
-              { label: "Show Tooltip", checked: preferences.showTooltip, fn: setShowTooltip },
+              { label: "Show grid", checked: preferences.showGrid, fn: setShowGrid },
+              { label: "Show volume", checked: preferences.showVolume, fn: setShowVolume },
+              { label: "Show tooltip", checked: preferences.showTooltip, fn: setShowTooltip },
             ].map(({ label, checked, fn }) => (
-              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 500 }}>{label}</span>
+              <div key={label} className={s.inlineToggleRow}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 500 }}>{label}</span>
                 <Toggle on={checked} onChange={fn} />
               </div>
             ))}
           </div>
         </div>
-      </SettingsCard>
+      </div>
     </>
   );
 }
 
-// ─── Security Tab ─────────────────────────────────────────────────────────────
+type SessionRow = { id: string; device: string; location: string; time: string; current: boolean };
+
+const SESSION_SEED: SessionRow[] = [
+  { id: "s1", device: "Chrome — Windows", location: "This device", time: "Now", current: true },
+  { id: "s2", device: "Safari — iPhone", location: "Signed in recently", time: "2 days ago", current: false },
+  { id: "s3", device: "Firefox — macOS", location: "Remote", time: "5 days ago", current: false },
+];
 
 function SecurityTab() {
+  const router = useRouter();
   const { sessionTimeout, twoFactor, setSessionTimeout, setTwoFactor, resetAllSettings } = useUserStore();
   const [showReset, setShowReset] = useState(false);
+  const [sessions, setSessions] = useState<SessionRow[]>(SESSION_SEED);
 
-  const FAKE_SESSIONS = [
-    { id: "s1", device: "Chrome — Windows", location: "Mumbai, IN", time: "Now", current: true },
-    { id: "s2", device: "Safari — iPhone 15", location: "Mumbai, IN", time: "2 days ago", current: false },
-    { id: "s3", device: "Firefox — macOS", location: "New York, US", time: "5 days ago", current: false },
-  ];
+  const revoke = (id: string) => {
+    setSessions((prev) => prev.filter((x) => x.id !== id));
+  };
 
   return (
     <>
-      <SettingsCard>
-        <SectionTitle>Authentication</SectionTitle>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 20px" }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Authentication</h3>
+        <div className={s.inlineToggleRow} style={{ padding: "0.25rem 0 1rem", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: 8 }}>
               <KeyRound size={15} style={{ color: "var(--accent)" }} />
-              Two-Factor Authentication
+              Two-factor authentication
             </div>
-            <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-              Protect your account with an authenticator app
+            <div className={s.notifDesc} style={{ marginTop: 6 }}>
+              Extra step at sign-in (stored locally for this demo)
             </div>
           </div>
           <Toggle on={twoFactor} onChange={setTwoFactor} />
         </div>
 
         <SelectField<string>
-          label="Session Timeout"
+          label="Session timeout"
           value={String(sessionTimeout)}
           options={SESSION_TIMEOUTS.map((t) => ({ value: String(t.value), label: t.label }))}
           onChange={(v) => setSessionTimeout(Number(v))}
           icon={<Clock size={13} />}
         />
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Active Sessions</SectionTitle>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {FAKE_SESSIONS.map((s) => (
-            <div key={s.id} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px", borderRadius: "8px",
-              background: s.current ? "var(--accent)0d" : "var(--bg-primary)",
-              border: `1px solid ${s.current ? "var(--accent)33" : "var(--border)"}`,
-            }}>
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Active sessions</h3>
+        <div className={s.sessionList}>
+          {sessions.map((row) => (
+            <div key={row.id} className={`${s.sessionCard} ${row.current ? s.sessionCurrent : ""}`}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  {s.device}
-                  {s.current && (
-                    <span style={{
-                      fontSize: "10px", fontWeight: 700, background: "var(--accent)",
-                      color: "white", padding: "1px 7px", borderRadius: "10px",
-                    }}>CURRENT</span>
-                  )}
+                <div style={{ fontWeight: 600, fontSize: "0.8125rem", display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+                  {row.device}
+                  {row.current ? <span className={s.badgeCurrent}>THIS DEVICE</span> : null}
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>
-                  {s.location} · {s.time}
+                <div className={s.notifDesc}>
+                  {row.location} · {row.time}
                 </div>
               </div>
-              {!s.current && (
-                <button type="button" style={{
-                  fontSize: "12px", color: "rgb(239,68,68)", background: "none",
-                  border: "1px solid rgba(239,68,68,.4)", borderRadius: "6px",
-                  padding: "4px 10px", cursor: "pointer", fontFamily: "inherit",
-                }}>
+              {!row.current ? (
+                <button type="button" className={s.sessionRevoke} onClick={() => revoke(row.id)}>
                   Revoke
                 </button>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
-      </SettingsCard>
+      </div>
 
-      <SettingsCard>
-        <SectionTitle>Account Data</SectionTitle>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <button type="button" style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "9px 16px", borderRadius: "8px",
-            border: "1px solid var(--border)", background: "var(--bg-primary)",
-            color: "var(--text-primary)", fontSize: "13px", fontWeight: 500,
-            cursor: "pointer", fontFamily: "inherit",
-          }}>
-            <Download size={14} /> Export Data
+      <div className={s.card}>
+        <h3 className={s.sectionTitle}>Account data</h3>
+        <div className={s.actionBar}>
+          <button type="button" className={s.ghostBtn} onClick={exportDashboardData}>
+            <Download size={14} /> Export JSON
           </button>
-          <button type="button" style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "9px 16px", borderRadius: "8px",
-            border: "1px solid var(--border)", background: "var(--bg-primary)",
-            color: "var(--text-primary)", fontSize: "13px", fontWeight: 500,
-            cursor: "pointer", fontFamily: "inherit",
-          }}>
-            <LogOut size={14} /> Sign Out
+          <button type="button" className={s.ghostBtn} onClick={() => router.push("/logout")}>
+            <LogOut size={14} /> Sign out
           </button>
         </div>
-      </SettingsCard>
+        <p className={s.mutedSmall}>
+          Export includes profile preferences, chart defaults, and portfolio rows stored in this browser.
+        </p>
+      </div>
 
-      <SettingsCard danger>
-        <SectionTitle>Danger Zone</SectionTitle>
-        <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
-          Clears all saved settings and reloads the app. This cannot be undone.
+      <div className={`${s.card} ${s.cardDanger}`}>
+        <h3 className={s.sectionTitle}>Danger zone</h3>
+        <p className={s.mutedSmall}>
+          Clears saved settings and portfolio cache keys from this browser, then reloads the app.
         </p>
         {!showReset ? (
-          <button type="button" onClick={() => setShowReset(true)} style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "9px 16px", borderRadius: "8px",
-            border: "1px solid rgba(239,68,68,.5)", background: "transparent",
-            color: "rgb(239,68,68)", fontSize: "13px", fontWeight: 600,
-            cursor: "pointer", fontFamily: "inherit",
-          }}>
-            <Trash2 size={14} /> Reset All Settings
+          <button type="button" className={s.dangerBtn} onClick={() => setShowReset(true)}>
+            <Trash2 size={14} /> Reset all settings
           </button>
         ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
-              Are you absolutely sure?
-            </span>
-            <button type="button" onClick={() => setShowReset(false)} style={{
-              padding: "7px 14px", borderRadius: "7px",
-              background: "var(--bg-primary)", color: "var(--text-primary)",
-              border: "1px solid var(--border)", fontSize: "13px",
-              cursor: "pointer", fontFamily: "inherit",
-            }}>
+          <div className={s.confirmRow}>
+            <span className={s.muted}>This cannot be undone.</span>
+            <button type="button" className={s.ghostBtn} onClick={() => setShowReset(false)}>
               Cancel
             </button>
-            <button type="button" onClick={resetAllSettings} style={{
-              padding: "7px 14px", borderRadius: "7px",
-              background: "rgb(239,68,68)", color: "white",
-              border: "none", fontSize: "13px", fontWeight: 600,
-              cursor: "pointer", fontFamily: "inherit",
-            }}>
-              Yes, Reset
+            <button type="button" className={s.dangerBtn} onClick={resetAllSettings}>
+              Yes, reset
             </button>
           </div>
         )}
-      </SettingsCard>
+      </div>
     </>
   );
 }
 
-// ─── Main Settings View ───────────────────────────────────────────────────────
-
-
 export function SettingsView() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
-  const initFromStorage = useUserStore((s) => s.initFromStorage);
+  const initFromStorage = useUserStore((st) => st.initFromStorage);
 
-  useEffect(() => { initFromStorage(); }, [initFromStorage]);
+  useEffect(() => {
+    initFromStorage();
+  }, [initFromStorage]);
 
   const tabContent: Record<TabId, React.ReactNode> = {
     profile: <ProfileTab />,
@@ -817,48 +749,25 @@ export function SettingsView() {
   };
 
   return (
-    <div style={{ maxWidth: "760px", margin: "0", padding: "40px 24px 80px" }}>
+    <div className={s.settingsShell}>
+      <button type="button" className={s.back} onClick={() => router.push("/")}>
+        <ArrowLeft size={16} aria-hidden /> Back to dashboard
+      </button>
 
-      {/* Header */}
-      <div style={{ marginBottom: "32px" }}>
-        <button
-          onClick={() => router.push("/")}
-          style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            background: "none", border: "none", cursor: "pointer",
-            color: "var(--text-secondary)", fontSize: "14px",
-            padding: "0 0 20px 0", fontFamily: "inherit"
-          }}
-        >
-          <ArrowLeft size={16} /> Back to Dashboard
-        </button>
-        <h1 style={{ fontSize: "26px", fontWeight: 700, marginBottom: "4px" }}>Settings</h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>
-          Manage your account, appearance, and market preferences
-        </p>
-      </div>
+      <h1 className={s.headerTitle}>Settings</h1>
+      <p className={s.headerLead}>Profile, appearance, notifications, market defaults, and security preferences.</p>
 
-      {/* Tab bar */}
-      <div style={{
-        display: "flex", gap: "4px", padding: "6px",
-        background: "var(--bg-card)", borderRadius: "12px",
-        border: "1px solid var(--border)", marginBottom: "24px",
-        overflowX: "auto",
-      }}>
+      <div className={s.tabBar} role="tablist" aria-label="Settings sections">
         {TABS.map((t) => {
           const active = activeTab === t.id;
           return (
             <button
-              key={t.id} type="button" onClick={() => setActiveTab(t.id)}
-              style={{
-                display: "flex", alignItems: "center", gap: "7px",
-                padding: "8px 16px", borderRadius: "8px",
-                background: active ? "var(--accent)" : "transparent",
-                color: active ? "white" : "var(--text-secondary)",
-                border: "none", cursor: "pointer", fontFamily: "inherit",
-                fontSize: "13px", fontWeight: active ? 700 : 500,
-                whiteSpace: "nowrap", transition: "all 150ms",
-              }}
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`${s.tab} ${active ? s.tabActive : ""}`}
+              onClick={() => setActiveTab(t.id)}
             >
               {t.icon}
               {t.label}
@@ -867,8 +776,7 @@ export function SettingsView() {
         })}
       </div>
 
-      {/* Tab content */}
-      <div key={activeTab}>
+      <div key={activeTab} role="tabpanel">
         {tabContent[activeTab]}
       </div>
     </div>

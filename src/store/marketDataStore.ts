@@ -1,7 +1,9 @@
 import { create } from "zustand";
+import { timeRangeToYahooRange } from "@/lib/chartRange";
 import type {
   ChartPoint,
   CommodityKey,
+  CurrencyCode,
   MarketRow,
   TimeRange,
 } from "@/types/models";
@@ -10,8 +12,35 @@ type Summary = {
   portfolioValue: number;
   dailyPnl: number;
   topCommodity: string;
-  aiSentiment: "Bullish" | "Bearish" | "Neutral";
+  marketSentiment: "Bullish" | "Bearish" | "Neutral";
 };
+
+const DEFAULT_SUMMARY: Summary = {
+  portfolioValue: 0,
+  dailyPnl: 0,
+  topCommodity: "Gold",
+  marketSentiment: "Bullish",
+};
+
+function normalizeSummary(raw: unknown): Summary {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_SUMMARY };
+  const o = raw as Record<string, unknown>;
+  const sRaw = o.marketSentiment ?? o.aiSentiment;
+  const sentiment: Summary["marketSentiment"] =
+    sRaw === "Bullish" || sRaw === "Bearish" || sRaw === "Neutral"
+      ? sRaw
+      : DEFAULT_SUMMARY.marketSentiment;
+  return {
+    portfolioValue:
+      typeof o.portfolioValue === "number"
+        ? o.portfolioValue
+        : DEFAULT_SUMMARY.portfolioValue,
+    dailyPnl: typeof o.dailyPnl === "number" ? o.dailyPnl : DEFAULT_SUMMARY.dailyPnl,
+    topCommodity:
+      typeof o.topCommodity === "string" ? o.topCommodity : DEFAULT_SUMMARY.topCommodity,
+    marketSentiment: sentiment,
+  };
+}
 
 type MarketState = {
   market: MarketRow[];
@@ -22,90 +51,114 @@ type MarketState = {
   searchQuery: string;
   loading: boolean;
   lastLiveUpdate: number;
+  fxRates: Partial<Record<CurrencyCode, number>> | null;
+  fxAsOf: string | null;
+  fxError: string | null;
+  commoditiesFetchedAt: string | null;
+  chartError: string | null;
+  chartFetchedAt: string | null;
   fetchMarket: () => Promise<void>;
   fetchChart: () => Promise<void>;
   fetchLivePrices: () => Promise<void>;
   setSelectedSymbol: (symbol: CommodityKey) => void;
   setTimeRange: (range: TimeRange) => void;
+  setChartContext: (symbol: CommodityKey, range: TimeRange) => void;
   setSearchQuery: (q: string) => void;
-  applyPriceTick: () => void;
-  startLiveUpdates: () => void;
+  startLiveUpdates: (intervalSeconds?: number) => void;
   stopLiveUpdates: () => void;
 };
 
 export const useMarketDataStore = create<MarketState>((set, get) => {
   let liveUpdateInterval: NodeJS.Timeout | null = null;
 
+  const applyCommodityPayload = (data: Record<string, unknown>) => {
+    const market = (data.market as MarketRow[]) || [];
+    set({
+      market,
+      summary: normalizeSummary(data.summary),
+      fxRates: (data.fx as Partial<Record<CurrencyCode, number>>) ?? null,
+      fxAsOf: typeof data.fxAsOf === "string" ? data.fxAsOf : null,
+      fxError: typeof data.fxError === "string" ? data.fxError : null,
+      commoditiesFetchedAt:
+        typeof data.fetchedAt === "string" ? data.fetchedAt : null,
+    });
+  };
+
   return {
     market: [],
-    summary: { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
+    summary: { ...DEFAULT_SUMMARY },
     chartPoints: [],
     selectedSymbol: "gold",
     timeRange: "1M",
     searchQuery: "",
     loading: false,
     lastLiveUpdate: 0,
+    fxRates: null,
+    fxAsOf: null,
+    fxError: null,
+    commoditiesFetchedAt: null,
+    chartError: null,
+    chartFetchedAt: null,
 
     fetchMarket: async () => {
       set({ loading: true });
       try {
-        // Fetch real market data from our API
         const res = await fetch("/api/commodities", { cache: "no-store" });
-        
+
         if (!res.ok) {
           throw new Error("Failed to fetch market data");
         }
-        
-        const data = await res.json();
+
+        const data = (await res.json()) as Record<string, unknown>;
+        applyCommodityPayload(data);
         set({
-          market: data.market || [],
-          summary: data.summary || { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
           loading: false,
           lastLiveUpdate: Date.now(),
         });
-      } catch {
-        // If API fails, return empty state with error
+      } catch (e) {
+        console.error(e);
         set({
           market: [],
-          summary: { portfolioValue: 0, dailyPnl: 0, topCommodity: "Gold", aiSentiment: "Bullish" },
+          summary: { ...DEFAULT_SUMMARY },
           loading: false,
+          fxRates: null,
+          fxAsOf: null,
+          fxError: "Could not load FX or quotes.",
+          commoditiesFetchedAt: null,
         });
       }
     },
 
     fetchLivePrices: async () => {
       try {
-        // Fetch real market data from our API
         const res = await fetch("/api/commodities", { cache: "no-store" });
-        
+
         if (!res.ok) {
           throw new Error("Failed to fetch live prices");
         }
-        
-        const data = await res.json();
-        
+
+        const data = (await res.json()) as Record<string, unknown>;
+        applyCommodityPayload(data);
         set({
-          market: data.market || [],
           lastLiveUpdate: Date.now(),
         });
       } catch (error) {
-        console.error('Failed to fetch live prices:', error);
+        console.error("Failed to fetch live prices:", error);
       }
     },
 
-    startLiveUpdates: () => {
-      // Clear existing interval
+    startLiveUpdates: (intervalSeconds = 30) => {
       if (liveUpdateInterval) {
         clearInterval(liveUpdateInterval);
       }
 
-      // Fetch immediately
+      const ms = Math.max(5000, Math.floor(intervalSeconds * 1000));
+
       void get().fetchLivePrices();
 
-      // Set up interval for live updates (every 30 seconds)
       liveUpdateInterval = setInterval(() => {
         void get().fetchLivePrices();
-      }, 30000);
+      }, ms);
     },
 
     stopLiveUpdates: () => {
@@ -117,34 +170,57 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
 
     fetchChart: async () => {
       const { selectedSymbol, timeRange } = get();
+      const yahoo = timeRangeToYahooRange(timeRange);
       const params = new URLSearchParams({
         symbol: selectedSymbol,
-        range: timeRange.toLowerCase(),
+        range: yahoo,
       });
-      
+
       try {
         const res = await fetch(`/api/commodities/chart?${params.toString()}`, {
           cache: "no-store",
         });
-        
+
         if (!res.ok) {
           throw new Error(`Failed to fetch chart data: ${res.status}`);
         }
-        
-        const data = await res.json();
-        
-        if (!data.points || data.points.length === 0) {
-          console.warn('No chart points returned for', selectedSymbol, timeRange);
-          set({ chartPoints: [] });
+
+        const data = (await res.json()) as {
+          points?: ChartPoint[];
+          error?: string;
+          fetchedAt?: string;
+        };
+
+        if (data.error && (!data.points || data.points.length === 0)) {
+          set({
+            chartPoints: [],
+            chartError: data.error,
+            chartFetchedAt: data.fetchedAt ?? null,
+          });
           return;
         }
-        
-        set({ chartPoints: data.points });
-        console.log('Chart data loaded:', data.points.length, 'points for', selectedSymbol);
-        
+
+        if (!data.points || data.points.length === 0) {
+          set({
+            chartPoints: [],
+            chartError: "No chart points returned",
+            chartFetchedAt: data.fetchedAt ?? null,
+          });
+          return;
+        }
+
+        set({
+          chartPoints: data.points,
+          chartError: null,
+          chartFetchedAt: data.fetchedAt ?? null,
+        });
       } catch (error) {
-        console.error('Failed to fetch chart:', error);
-        set({ chartPoints: [] });
+        console.error("Failed to fetch chart:", error);
+        set({
+          chartPoints: [],
+          chartError: error instanceof Error ? error.message : "Chart failed",
+          chartFetchedAt: null,
+        });
       }
     },
 
@@ -158,24 +234,14 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
       void get().fetchChart();
     },
 
-    setSearchQuery: (q) => {
+    setChartContext: (symbol, range) => {
+      set({ selectedSymbol: symbol, timeRange: range });
+      void get().fetchChart();
+    },
+
+    setSearchQuery: (q: string) => {
       const normalizedQuery = q.trim();
       set({ searchQuery: normalizedQuery });
     },
-
-    applyPriceTick: () =>
-      set((state) => ({
-        market: state.market.map((row) => {
-          const delta = (Math.random() - 0.5) * row.price * 0.0008;
-          const price = Math.max(0.01, row.price + delta);
-          const change =
-            row.change24h + (Math.random() - 0.5) * 0.05;
-          return {
-            ...row,
-            price: Math.round(price * 100) / 100,
-            change24h: Math.round(change * 100) / 100,
-          };
-        }),
-      })),
   };
 });

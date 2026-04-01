@@ -4,15 +4,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart2,
-  Brain,
   Briefcase,
+  CircleDollarSign,
   FileText,
   HelpCircle,
   LayoutDashboard,
   LogOut,
-  Menu,
+  PanelLeft,
+  PanelLeftClose,
   Newspaper,
-  Settings,
   Building,
   TrendingUp,
 } from "lucide-react";
@@ -25,14 +25,14 @@ function pathActive(pathname: string, href: string) {
 }
 
 function getIcon(iconName: string) {
-  const icons: Record<string, any> = {
+  const icons: Record<string, typeof LayoutDashboard> = {
     LayoutDashboard,
     BarChart2,
     Briefcase,
-    Brain,
     Newspaper,
     FileText,
     Building,
+    TrendingUp,
     HelpCircle,
     LogOut,
   };
@@ -69,23 +69,26 @@ export function Sidebar() {
         aria-label="Sidebar navigation"
       >
         {/* Logo + Collapse Button */}
-        <div className="ca-sidebar__head" onClick={toggleSidebar} style={{ cursor: 'pointer' }}>
-          {sidebarOpen && (
+        <div className="ca-sidebar__head">
+          {sidebarOpen ? (
             <div className="ca-sidebar__logo">
-              <div className="ca-sidebar__logo-icon">🥇</div>
+              <div className="ca-sidebar__logo-icon" aria-hidden>
+                <CircleDollarSign size={18} strokeWidth={2.25} />
+              </div>
               <span className="ca-sidebar__logo-text">Metals.dev</span>
+            </div>
+          ) : (
+            <div className="ca-sidebar__logo-icon" aria-hidden style={{ margin: "0 auto" }}>
+              <CircleDollarSign size={18} strokeWidth={2.25} />
             </div>
           )}
           <button
             type="button"
             className="ca-sidebar__collapse"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSidebar();
-            }}
+            onClick={() => toggleSidebar()}
             aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
-            {sidebarOpen ? <Menu size={18} /> : <Menu size={18} />}
+            {sidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
           </button>
         </div>
 

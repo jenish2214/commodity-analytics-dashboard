@@ -19,7 +19,13 @@ import type { ChartPoint, CommodityKey, TimeRange } from "@/types/models";
 import { COMMODITY_OPTIONS, TIME_RANGES } from "@/lib/constants";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { useChartPreferencesStore } from "@/store/chartPreferencesStore";
-import { useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { useUserStore } from "@/store/userStore";
+import {
+  convertUsdForDisplay,
+  formatCurrencyAmount,
+} from "@/utils/format";
+import { rsiSeries } from "@/utils/indicators";
 
 type Props = {
   title?: string;
@@ -36,24 +42,54 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
   const { preferences, setChartType, toggleIndicator, setShowGrid, setShowTooltip } = useChartPreferencesStore();
   const [showSettings, setShowSettings] = useState(false);
 
-  const data: ChartPoint[] = chartPoints;
+  const currency = useUserStore((s) => s.currency);
+  const fxRates = useMarketDataStore((s) => s.fxRates);
+
+  const displayCurrency = useMemo(
+    () => convertUsdForDisplay(1, currency, fxRates).displayCurrency,
+    [currency, fxRates]
+  );
+
+  const fmtPrice = useCallback(
+    (n: number | string) =>
+      formatCurrencyAmount(
+        typeof n === "string" ? Number(n) : n,
+        displayCurrency
+      ),
+    [displayCurrency]
+  );
+
+  const data: ChartPoint[] = useMemo(
+    () =>
+      chartPoints.map((p) => ({
+        ...p,
+        price: convertUsdForDisplay(p.price, currency, fxRates).amount,
+      })),
+    [chartPoints, currency, fxRates]
+  );
+
+  const closes = data.map((d) => d.price);
+  const rsiVals = rsiSeries(closes, 14);
 
   const openTradingView = () => {
     window.open('/trading', '_blank');
   };
 
-  // Calculate additional indicators
   const enhancedData = data.map((point, index) => {
-    const result: any = { ...point };
-    
-    // Simple Moving Average (20-period)
+    const result = { ...point } as ChartPoint & {
+      sma?: number;
+      ema?: number;
+      rsi?: number;
+      volume?: number;
+    };
+
     if (preferences.indicators.includes("sma") && index >= 19) {
       const last20 = data.slice(index - 19, index + 1);
-      const sma = last20.reduce((sum, p) => sum + p.price, 0) / 20;
+      const sma =
+        last20.reduce((sum, p) => sum + p.price, 0) / last20.length;
       result.sma = parseFloat(sma.toFixed(2));
     }
-    
-    // Exponential Moving Average (20-period)
+
     if (preferences.indicators.includes("ema") && index >= 19) {
       const multiplier = 2 / (20 + 1);
       let ema = data[19].price;
@@ -62,30 +98,19 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
       }
       result.ema = parseFloat(ema.toFixed(2));
     }
-    
-    // Volume (mock data for now)
+
     if (preferences.indicators.includes("volume")) {
-      result.volume = Math.max(1000000, Math.random() * 10000000);
-    }
-    
-    // RSI (simplified 14-period)
-    if (preferences.indicators.includes("rsi") && index >= 13) {
-      const last14 = data.slice(index - 13, index + 1);
-      let gains = 0;
-      let losses = 0;
-      
-      for (let i = 1; i < last14.length; i++) {
-        const diff = last14[i].price - last14[i - 1].price;
-        if (diff > 0) gains += diff;
-        else losses -= diff;
+      const v = point.volume;
+      if (typeof v === "number" && Number.isFinite(v) && v > 0) {
+        result.volume = v;
       }
-      
-      const avgGain = gains / 14;
-      const avgLoss = losses / 14;
-      const rs = avgGain / (avgLoss || 1);
-      result.rsi = parseFloat((100 - 100 / (1 + rs)).toFixed(2));
     }
-    
+
+    if (preferences.indicators.includes("rsi")) {
+      const r = rsiVals[index];
+      if (r != null) result.rsi = parseFloat(r.toFixed(2));
+    }
+
     return result;
   });
 
@@ -101,7 +126,12 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
           <AreaChart {...commonProps}>
             {preferences.showGrid && <CartesianGrid strokeDasharray="4 4" stroke={preferences.colors.grid} />}
             <XAxis dataKey="period" tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
-            <YAxis domain={["auto", "auto"]} tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
+            <YAxis
+              domain={["auto", "auto"]}
+              tick={{ fill: preferences.colors.text, fontSize: 11 }}
+              tickLine={false}
+              tickFormatter={(v) => fmtPrice(v)}
+            />
             {preferences.showTooltip && (
               <Tooltip
                 contentStyle={{
@@ -109,7 +139,7 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                   border: "1px solid #e2e8f0",
                   boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
                 }}
-                formatter={(value: number | string) => [`$${Number(value).toFixed(2)}`, "Price"]}
+                formatter={(value: number | string) => [fmtPrice(value), "Price"]}
               />
             )}
             <Area
@@ -150,7 +180,12 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
           <BarChart {...commonProps}>
             {preferences.showGrid && <CartesianGrid strokeDasharray="4 4" stroke={preferences.colors.grid} />}
             <XAxis dataKey="period" tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
-            <YAxis domain={["auto", "auto"]} tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
+            <YAxis
+              domain={["auto", "auto"]}
+              tick={{ fill: preferences.colors.text, fontSize: 11 }}
+              tickLine={false}
+              tickFormatter={(v) => fmtPrice(v)}
+            />
             {preferences.showTooltip && (
               <Tooltip
                 contentStyle={{
@@ -158,7 +193,7 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                   border: "1px solid #e2e8f0",
                   boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
                 }}
-                formatter={(value: number | string) => [`$${Number(value).toFixed(2)}`, "Price"]}
+                formatter={(value: number | string) => [fmtPrice(value), "Price"]}
               />
             )}
             <Bar
@@ -175,7 +210,12 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
           <LineChart {...commonProps}>
             {preferences.showGrid && <CartesianGrid strokeDasharray="4 4" stroke={preferences.colors.grid} />}
             <XAxis dataKey="period" tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
-            <YAxis domain={["auto", "auto"]} tick={{ fill: preferences.colors.text, fontSize: 11 }} tickLine={false} />
+            <YAxis
+              domain={["auto", "auto"]}
+              tick={{ fill: preferences.colors.text, fontSize: 11 }}
+              tickLine={false}
+              tickFormatter={(v) => fmtPrice(v)}
+            />
             {preferences.showTooltip && (
               <Tooltip
                 contentStyle={{
@@ -186,7 +226,9 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                 formatter={(value: number | string, name: string) => {
                   if (name === "rsi") return [`${Number(value).toFixed(2)}%`, "RSI"];
                   if (name === "volume") return [`${(Number(value) / 1000000).toFixed(1)}M`, "Volume"];
-                  return [`$${Number(value).toFixed(2)}`, name === "sma" ? "SMA" : name === "ema" ? "EMA" : "Price"];
+                  const label =
+                    name === "sma" ? "SMA" : name === "ema" ? "EMA" : "Price";
+                  return [fmtPrice(value), label];
                 }}
               />
             )}
@@ -262,9 +304,20 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
   return (
     <section className="ca-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-        <h2 className="ca-page__title" style={{ fontSize: "1.125rem", margin: 0 }}>
-          {title}
-        </h2>
+        <div>
+          <h2 className="ca-page__title" style={{ fontSize: "1.125rem", margin: 0 }}>
+            {title}
+          </h2>
+          <p
+            style={{
+              margin: "0.35rem 0 0",
+              fontSize: "0.75rem",
+              color: "var(--text-secondary)",
+            }}
+          >
+            Price scale: USD contract → {displayCurrency} (ECB FX from market data).
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
