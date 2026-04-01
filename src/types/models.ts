@@ -4,8 +4,23 @@ export type CommodityKey =
   | "gold"
   | "silver"
   | "crudeOil"
+  | "brentCrude"
   | "naturalGas"
-  | "copper";
+  | "copper"
+  | "platinum"
+  | "wheat"
+  | "rice"
+  | "corn"
+  | "soybean"
+  | "coffee"
+  | "sugar";
+
+/** Desk-style bucket for rotation and relative-value views */
+export type CommoditySector =
+  | "precious_metals"
+  | "energy"
+  | "base_metals"
+  | "agriculture";
 
 export type MarketRow = {
   id: string;
@@ -17,9 +32,51 @@ export type MarketRow = {
   price: number;
   unit: string;
   change24h: number;
+  changeAbsUsd?: number;
   volume: string;
   marketCap: string;
   signal: "BUY" | "SELL" | "HOLD";
+  sparkline?: number[];
+  volatility7dAnn?: number | null;
+  volatility30dAnn?: number | null;
+  riskIndex?: number | null;
+  sector?: CommoditySector;
+  /** Wilder RSI(14) on daily closes when history allows */
+  rsi14?: number | null;
+  /** Heuristic tags from momentum / mean-reversion rules */
+  opportunityTags?: string[];
+  /** 0–100 opportunity-style score (higher = more “interesting” move / setup) */
+  opportunityScore?: number | null;
+};
+
+/** Aggregate intelligence returned with `/api/commodities` */
+export type SectorRotationRow = {
+  sector: CommoditySector;
+  label: string;
+  avgChange24h: number;
+  medianChange24h: number;
+  constituents: string[];
+};
+
+export type CommoditySpreadQuote = {
+  label: string;
+  value: number;
+  detail: string;
+};
+
+export type SeasonalityHint = {
+  commodity: string;
+  symbol: CommodityKey;
+  strongestMonths: string;
+  avgStrongestMonthReturnPct: number | null;
+};
+
+export type CommodityAnalytics = {
+  sectorRotation: SectorRotationRow[];
+  spreads: CommoditySpreadQuote[];
+  marketBreadth: { advancers: number; decliners: number; neutral: number };
+  sentiment: "Bullish" | "Bearish" | "Neutral";
+  seasonalityHints: SeasonalityHint[];
 };
 
 export type ChartPoint = {

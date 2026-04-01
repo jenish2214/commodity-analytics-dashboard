@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useAlertStore } from "@/store/alertStore";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { useUserStore } from "@/store/userStore";
@@ -12,12 +13,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const stopLiveUpdates = useMarketDataStore((s) => s.stopLiveUpdates);
   const fetchPortfolio = usePortfolioStore((s) => s.fetchPortfolio);
   const refreshRate = useUserStore((s) => s.refreshRate);
+  const market = useMarketDataStore((s) => s.market);
+  const evaluateMarket = useAlertStore((s) => s.evaluateMarket);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      await fetchMarket();
-      if (!cancelled) await fetchChart();
+      try {
+        await fetchMarket();
+        if (!cancelled) await fetchChart();
+      } catch (e) {
+        console.error("AppProviders bootstrap:", e);
+      }
     })();
     return () => {
       cancelled = true;
@@ -25,13 +32,29 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, [fetchMarket, fetchChart]);
 
   useEffect(() => {
-    startLiveUpdates(refreshRate);
+    try {
+      startLiveUpdates(refreshRate);
+    } catch (e) {
+      console.error("Live updates:", e);
+    }
     return () => stopLiveUpdates();
   }, [refreshRate, startLiveUpdates, stopLiveUpdates]);
 
   useEffect(() => {
-    void fetchPortfolio();
+    try {
+      void fetchPortfolio();
+    } catch (e) {
+      console.error("Portfolio fetch:", e);
+    }
   }, [fetchPortfolio]);
+
+  useEffect(() => {
+    try {
+      if (market.length > 0) evaluateMarket(market);
+    } catch (e) {
+      console.error("Alert evaluation:", e);
+    }
+  }, [market, evaluateMarket]);
 
   return (
     <>

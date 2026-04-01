@@ -1,14 +1,9 @@
 import { notFound } from "next/navigation";
 import { CommodityDetailView } from "@/components/views/CommodityDetailView";
+import { commodityIdSet } from "@/services/commodities/definitions";
 import type { CommodityKey } from "@/types/models";
 
-const KEYS = new Set<CommodityKey>([
-  "gold",
-  "silver",
-  "crudeOil",
-  "naturalGas",
-  "copper",
-]);
+const KEYS = commodityIdSet();
 
 type PageProps = {
   params: { symbol: string };

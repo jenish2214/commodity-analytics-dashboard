@@ -8,6 +8,7 @@ import {
   convertInrAmountToDisplay,
   formatCurrencyAmount,
 } from "@/utils/format";
+import { GRAMS_PER_TROY_OZ } from "@/services/indian/inrFormats";
 
 export function IndianCommodityPanel() {
   const [result, setResult] = useState<IndianCommodityResponse | null>(null);
@@ -229,6 +230,30 @@ export function IndianCommodityPanel() {
           </div>
         ))}
       </div>
+
+      <hr style={{ margin: "1.25rem 0", borderColor: "var(--border)" }} />
+      <p className="ca-stat-card__label" style={{ marginBottom: "0.35rem" }}>
+        Indian ₹ reference formulas (MCX-style spot bridge)
+      </p>
+      <ul
+        style={{
+          margin: 0,
+          paddingLeft: "1.1rem",
+          fontSize: "0.78rem",
+          color: "var(--text-secondary)",
+          lineHeight: 1.5,
+        }}
+      >
+        <li>
+          24K ₹/g = (Gold USD/troy oz × USDINR) ÷ {GRAMS_PER_TROY_OZ}
+        </li>
+        <li>22K = 24K × 0.916 · 18K = 24K × 0.75</li>
+        <li>
+          Silver ₹/g = (Silver USD/troy oz × USDINR) ÷ {GRAMS_PER_TROY_OZ}; ₹/kg
+          = ×1000
+        </li>
+        <li>Crude ₹/bbl = USD/bbl × USDINR; ₹/L = ₹/bbl ÷ 159</li>
+      </ul>
     </section>
   );
 }

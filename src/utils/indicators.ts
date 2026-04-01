@@ -85,3 +85,66 @@ export function lastMacd(prices: number[]): MacdSnapshot | null {
     histogram: line - signal,
   };
 }
+
+/** MACD histogram value per bar (aligned with `prices` indices). */
+export function macdHistogramSeries(prices: number[]): (number | undefined)[] {
+  const hist: (number | undefined)[] = prices.map(() => undefined);
+  try {
+    if (prices.length < 35) return hist;
+    const e12 = emaSeries(prices, 12);
+    const e26 = emaSeries(prices, 26);
+    const macdLine: number[] = [];
+    for (let i = 0; i < prices.length; i++) {
+      const a = e12[i];
+      const b = e26[i];
+      macdLine.push(a != null && b != null ? a - b : NaN);
+    }
+    const first = macdLine.findIndex((x) => Number.isFinite(x));
+    if (first < 0) return hist;
+    const tail = macdLine.slice(first);
+    const sigSeries = emaSeries(tail, 9);
+    for (let j = 0; j < tail.length; j++) {
+      const line = tail[j];
+      const signal = sigSeries[j];
+      if (
+        Number.isFinite(line) &&
+        signal != null &&
+        Number.isFinite(signal)
+      ) {
+        hist[first + j] = line - signal;
+      }
+    }
+    return hist;
+  } catch {
+    return hist;
+  }
+}
+
+export type BollingerBand = { mid?: number; upper?: number; lower?: number };
+
+/** Bollinger bands (SMA 20, 2σ) per index. */
+export function bollingerSeries(
+  prices: number[],
+  period = 20,
+  mult = 2
+): BollingerBand[] {
+  try {
+    return prices.map((_, index) => {
+      if (index < period - 1 || period < 2) {
+        return {};
+      }
+      const window = prices.slice(index - period + 1, index + 1);
+      const mid = window.reduce((s, x) => s + x, 0) / period;
+      const v =
+        window.reduce((s, x) => s + (x - mid) ** 2, 0) / Math.max(1, period - 1);
+      const sd = Math.sqrt(Math.max(0, v));
+      return {
+        mid,
+        upper: mid + mult * sd,
+        lower: mid - mult * sd,
+      };
+    });
+  } catch {
+    return prices.map(() => ({}));
+  }
+}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getMarketStatus } from "@/utils/marketStatus";
 
 export function MarketSessionStrip() {
-  const [status, setStatus] = useState(getMarketStatus);
+  const [status, setStatus] = useState(() => getMarketStatus());
 
   useEffect(() => {
     const id = setInterval(() => setStatus(getMarketStatus()), 30_000);

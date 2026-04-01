@@ -1,7 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { CommodityTable } from "@/components/CommodityTable";
+import { CommodityHeatmap } from "@/components/terminal/CommodityHeatmap";
+import { CommodityMarketBoard } from "@/components/terminal/CommodityMarketBoard";
+import { CorrelationMatrixPanel } from "@/components/terminal/CorrelationMatrixPanel";
+import { AlertDock } from "@/components/terminal/AlertDock";
+import { MarketInsightsPanel } from "@/components/terminal/MarketInsightsPanel";
+import { OpportunityScannerPanel } from "@/components/terminal/OpportunityScannerPanel";
+import { TerminalNewsStrip } from "@/components/terminal/TerminalNewsStrip";
+import { VolatilityStrip } from "@/components/terminal/VolatilityStrip";
 import { StatCard } from "@/components/StatCard";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { usePortfolioStore } from "@/store/portfolioStore";
@@ -10,6 +18,18 @@ import {
   formatCurrencyAmount,
   formatSignedCurrency,
 } from "@/utils/format";
+
+const ChartCard = dynamic(
+  () => import("@/components/ChartCard").then((m) => m.ChartCard),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="ca-card" style={{ padding: "1rem", color: "var(--text-secondary)" }}>
+        Loading chart module…
+      </div>
+    ),
+  }
+);
 
 function bestPerformerSymbol(
   market: { symbol: string; commodity: string; change24h: number }[]
@@ -23,6 +43,7 @@ export function DashboardView() {
   const currency = useUserStore((s) => s.currency);
   const market = useMarketDataStore((s) => s.market);
   const summary = useMarketDataStore((s) => s.summary);
+  const commodityAnalytics = useMarketDataStore((s) => s.commodityAnalytics);
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const loading = useMarketDataStore((s) => s.loading);
   const items = usePortfolioStore((s) => s.items);
@@ -55,9 +76,9 @@ export function DashboardView() {
 
   return (
     <div className="ca-page">
-      <h1 className="ca-page__title">Commodity Market Overview</h1>
+      <h1 className="ca-page__title">Commodity analytics terminal</h1>
       <p className="ca-page__lead">
-        Benchmarks, flows, and intraday market context.
+        Benchmarks, vols, cross-asset correlations, and desk-style layouts — all sourced from the same live commodity API.
       </p>
       {loading && market.length === 0 ? (
         <div className="ca-dashboard-skeleton" aria-busy="true" aria-label="Loading market data">
@@ -89,8 +110,29 @@ export function DashboardView() {
               hint="by 24h change"
             />
           </div>
-          <div style={{ display: "grid", gap: "1rem" }}>
-            <CommodityTable rows={rows} />
+          <div className="ca-terminal-grid">
+            <div style={{ display: "grid", gap: "1rem", minWidth: 0 }}>
+              <CommodityHeatmap rows={rows} />
+              <OpportunityScannerPanel rows={rows} analytics={commodityAnalytics} />
+              <CommodityMarketBoard rows={rows} />
+              <ChartCard title="Advanced chart workspace" />
+              <VolatilityStrip rows={rows} />
+              <CorrelationMatrixPanel />
+              <TerminalNewsStrip />
+            </div>
+            <aside
+              style={{
+                display: "grid",
+                gap: "1rem",
+                position: "sticky",
+                top: "0.5rem",
+                alignSelf: "start",
+              }}
+              className="ca-terminal-aside"
+            >
+              <AlertDock />
+              <MarketInsightsPanel rows={rows} />
+            </aside>
           </div>
         </>
       )}

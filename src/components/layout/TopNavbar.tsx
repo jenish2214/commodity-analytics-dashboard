@@ -16,9 +16,23 @@ const CURRENCY_OPTIONS: { code: CurrencyCode; label: string }[] = [
 ];
 
 const SEARCH_SUGGESTIONS = [
-  "Gold", "Silver", "Crude Oil", "Natural Gas", "Copper",
-  "Platinum", "Palladium", "Aluminum", "Nickel", "Zinc",
-  "Market News", "Portfolio", "Market Indices", "Dashboard"
+  "Gold",
+  "Silver",
+  "Crude Oil",
+  "Natural Gas",
+  "Copper",
+  "Platinum",
+  "Wheat",
+  "Rice",
+  "Corn",
+  "Soybean",
+  "Coffee",
+  "Sugar",
+  "Palladium",
+  "Market News",
+  "Portfolio",
+  "Market Indices",
+  "Dashboard",
 ];
 
 type Props = {

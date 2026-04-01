@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { yahooIntervalForRange } from "@/lib/chartRange";
+import { tickerMapByCommodityId } from "@/services/commodities/definitions";
 
 export const dynamic = "force-dynamic";
 
-const TICKER_MAP: Record<string, string> = {
-  gold: "GC=F",
-  silver: "SI=F",
-  crudeOil: "CL=F",
-  naturalGas: "NG=F",
-  copper: "HG=F",
-};
+const TICKER_MAP = tickerMapByCommodityId();
 
 /** Client sends Yahoo-style range tokens (1d, 5d, 1mo, …). */
 const RANGE_ALIASES: Record<string, string> = {

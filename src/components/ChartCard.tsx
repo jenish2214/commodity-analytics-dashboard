@@ -10,7 +10,7 @@ import {
   YAxis,
   Bar,
   BarChart,
-  ComposedChart,
+  Brush,
   Area,
   AreaChart,
 } from "recharts";
@@ -18,14 +18,21 @@ import { ExternalLink, Settings, TrendingUp, BarChart3, Activity, Layers } from 
 import type { ChartPoint, CommodityKey, TimeRange } from "@/types/models";
 import { COMMODITY_OPTIONS, TIME_RANGES } from "@/lib/constants";
 import { useMarketDataStore } from "@/store/marketDataStore";
-import { useChartPreferencesStore } from "@/store/chartPreferencesStore";
+import {
+  useChartPreferencesStore,
+  type IndicatorType,
+} from "@/store/chartPreferencesStore";
 import { useMemo, useState, useCallback } from "react";
 import { useUserStore } from "@/store/userStore";
 import {
   convertUsdForDisplay,
   formatCurrencyAmount,
 } from "@/utils/format";
-import { rsiSeries } from "@/utils/indicators";
+import {
+  bollingerSeries,
+  macdHistogramSeries,
+  rsiSeries,
+} from "@/utils/indicators";
 
 type Props = {
   title?: string;
@@ -70,6 +77,8 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
 
   const closes = data.map((d) => d.price);
   const rsiVals = rsiSeries(closes, 14);
+  const bbBands = bollingerSeries(closes, 20, 2);
+  const macdH = macdHistogramSeries(closes);
 
   const openTradingView = () => {
     window.open('/trading', '_blank');
@@ -81,6 +90,9 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
       ema?: number;
       rsi?: number;
       volume?: number;
+      bbUpper?: number;
+      bbLower?: number;
+      macdHist?: number;
     };
 
     if (preferences.indicators.includes("sma") && index >= 19) {
@@ -111,13 +123,24 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
       if (r != null) result.rsi = parseFloat(r.toFixed(2));
     }
 
+    if (preferences.indicators.includes("bollinger")) {
+      const b = bbBands[index];
+      if (b?.upper != null) result.bbUpper = parseFloat(b.upper.toFixed(4));
+      if (b?.lower != null) result.bbLower = parseFloat(b.lower.toFixed(4));
+    }
+
+    if (preferences.indicators.includes("macd")) {
+      const m = macdH[index];
+      if (m != null) result.macdHist = parseFloat(m.toFixed(6));
+    }
+
     return result;
   });
 
   const renderChart = () => {
     const commonProps = {
       data: enhancedData,
-      margin: { top: 8, right: 8, left: 0, bottom: 0 },
+      margin: { top: 8, right: 8, left: 0, bottom: 28 },
     };
 
     switch (preferences.chartType) {
@@ -224,8 +247,11 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                   boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
                 }}
                 formatter={(value: number | string, name: string) => {
-                  if (name === "rsi") return [`${Number(value).toFixed(2)}%`, "RSI"];
+                  if (name === "rsi") return [`${Number(value).toFixed(2)}`, "RSI"];
                   if (name === "volume") return [`${(Number(value) / 1000000).toFixed(1)}M`, "Volume"];
+                  if (name === "macdHist") return [Number(value).toFixed(4), "MACD hist"];
+                  if (name === "bbUpper" || name === "bbLower")
+                    return [fmtPrice(value), name === "bbUpper" ? "BB upper" : "BB lower"];
                   const label =
                     name === "sma" ? "SMA" : name === "ema" ? "EMA" : "Price";
                   return [fmtPrice(value), label];
@@ -260,6 +286,26 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                 dot={false}
               />
             )}
+            {preferences.indicators.includes("bollinger") && (
+              <>
+                <Line
+                  type="monotone"
+                  dataKey="bbUpper"
+                  stroke="#94a3b8"
+                  strokeWidth={1}
+                  dot={false}
+                  strokeDasharray="4 4"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="bbLower"
+                  stroke="#94a3b8"
+                  strokeWidth={1}
+                  dot={false}
+                  strokeDasharray="4 4"
+                />
+              </>
+            )}
             {preferences.indicators.includes("rsi") && (
               <Line
                 type="monotone"
@@ -268,6 +314,16 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                 strokeWidth={1}
                 dot={false}
                 yAxisId="rsi"
+              />
+            )}
+            {preferences.indicators.includes("macd") && (
+              <Line
+                type="monotone"
+                dataKey="macdHist"
+                stroke="#0ea5e9"
+                strokeWidth={1}
+                dot={false}
+                yAxisId="macd"
               />
             )}
             {preferences.indicators.includes("volume") && (
@@ -296,6 +352,22 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                 hide
               />
             )}
+            {preferences.indicators.includes("macd") && (
+              <YAxis
+                yAxisId="macd"
+                orientation="right"
+                width={44}
+                domain={["auto", "auto"]}
+                tick={{ fill: "#0ea5e9", fontSize: 9 }}
+                tickLine={false}
+              />
+            )}
+            <Brush
+              dataKey="period"
+              height={20}
+              stroke="var(--accent)"
+              travellerWidth={6}
+            />
           </LineChart>
         );
     }
@@ -441,19 +513,21 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
                 { id: 'sma', label: 'SMA', icon: Activity },
                 { id: 'ema', label: 'EMA', icon: Layers },
                 { id: 'rsi', label: 'RSI', icon: TrendingUp },
+                { id: 'macd', label: 'MACD', icon: BarChart3 },
+                { id: 'bollinger', label: 'BB', icon: Layers },
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
-                  onClick={() => toggleIndicator(id as any)}
+                  onClick={() => toggleIndicator(id as IndicatorType)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.25rem',
                     padding: '0.25rem 0.5rem',
                     borderRadius: '4px',
-                    background: preferences.indicators.includes(id as any) ? 'var(--accent)' : 'var(--bg-card)',
-                    border: preferences.indicators.includes(id as any) ? '1px solid var(--accent)' : '1px solid var(--border)',
-                    color: preferences.indicators.includes(id as any) ? 'var(--bg-primary)' : 'var(--text-primary)',
+                    background: preferences.indicators.includes(id as IndicatorType) ? 'var(--accent)' : 'var(--bg-card)',
+                    border: preferences.indicators.includes(id as IndicatorType) ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    color: preferences.indicators.includes(id as IndicatorType) ? 'var(--bg-primary)' : 'var(--text-primary)',
                     fontSize: '0.75rem',
                     cursor: 'pointer',
                   }}
@@ -525,6 +599,7 @@ export function ChartCard({ title = "Commodity Price Chart" }: Props) {
           </div>
         </div>
       </div>
+
       <div className="ca-chart-wrap" style={{ height: "320px", width: "100%" }}>
         {loading && data.length === 0 ? (
           <div style={{

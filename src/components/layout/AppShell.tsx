@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNavbar } from "@/components/layout/TopNavbar";
 import { MarketSessionStrip } from "@/components/layout/MarketSessionStrip";
+import { CommodityTickerBar } from "@/components/terminal/CommodityTickerBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { useUserStore } from "@/store/userStore";
 
@@ -48,7 +49,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         style={{ width: isSettings ? "100%" : undefined }}
       >
         <TopNavbar onMenuClick={toggleSidebar} menuOpen={sidebarOpen} />
-        {!isSettings ? <MarketSessionStrip /> : null}
+        {!isSettings ? (
+          <>
+            <MarketSessionStrip />
+            <CommodityTickerBar />
+          </>
+        ) : null}
         {children}
         <BottomNav />
       </div>

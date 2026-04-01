@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { timeRangeToYahooRange } from "@/lib/chartRange";
 import type {
   ChartPoint,
+  CommodityAnalytics,
   CommodityKey,
   CurrencyCode,
   MarketRow,
@@ -21,6 +22,44 @@ const DEFAULT_SUMMARY: Summary = {
   topCommodity: "Gold",
   marketSentiment: "Bullish",
 };
+
+const DEFAULT_ANALYTICS: CommodityAnalytics = {
+  sectorRotation: [],
+  spreads: [],
+  marketBreadth: { advancers: 0, decliners: 0, neutral: 0 },
+  sentiment: "Neutral",
+  seasonalityHints: [],
+};
+
+function normalizeAnalytics(raw: unknown): CommodityAnalytics {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_ANALYTICS };
+  const o = raw as Record<string, unknown>;
+  const breadthRaw = o.marketBreadth;
+  const breadth =
+    breadthRaw && typeof breadthRaw === "object"
+      ? (breadthRaw as Record<string, unknown>)
+      : {};
+  return {
+    sectorRotation: Array.isArray(o.sectorRotation)
+      ? (o.sectorRotation as CommodityAnalytics["sectorRotation"])
+      : [],
+    spreads: Array.isArray(o.spreads)
+      ? (o.spreads as CommodityAnalytics["spreads"])
+      : [],
+    marketBreadth: {
+      advancers: typeof breadth.advancers === "number" ? breadth.advancers : 0,
+      decliners: typeof breadth.decliners === "number" ? breadth.decliners : 0,
+      neutral: typeof breadth.neutral === "number" ? breadth.neutral : 0,
+    },
+    sentiment:
+      o.sentiment === "Bullish" || o.sentiment === "Bearish" || o.sentiment === "Neutral"
+        ? o.sentiment
+        : DEFAULT_ANALYTICS.sentiment,
+    seasonalityHints: Array.isArray(o.seasonalityHints)
+      ? (o.seasonalityHints as CommodityAnalytics["seasonalityHints"])
+      : [],
+  };
+}
 
 function normalizeSummary(raw: unknown): Summary {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_SUMMARY };
@@ -45,6 +84,7 @@ function normalizeSummary(raw: unknown): Summary {
 type MarketState = {
   market: MarketRow[];
   summary: Summary;
+  commodityAnalytics: CommodityAnalytics;
   chartPoints: ChartPoint[];
   selectedSymbol: CommodityKey;
   timeRange: TimeRange;
@@ -76,6 +116,7 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
     set({
       market,
       summary: normalizeSummary(data.summary),
+      commodityAnalytics: normalizeAnalytics(data.analytics),
       fxRates: (data.fx as Partial<Record<CurrencyCode, number>>) ?? null,
       fxAsOf: typeof data.fxAsOf === "string" ? data.fxAsOf : null,
       fxError: typeof data.fxError === "string" ? data.fxError : null,
@@ -87,6 +128,7 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
   return {
     market: [],
     summary: { ...DEFAULT_SUMMARY },
+    commodityAnalytics: { ...DEFAULT_ANALYTICS },
     chartPoints: [],
     selectedSymbol: "gold",
     timeRange: "1M",
@@ -120,6 +162,7 @@ export const useMarketDataStore = create<MarketState>((set, get) => {
         set({
           market: [],
           summary: { ...DEFAULT_SUMMARY },
+          commodityAnalytics: { ...DEFAULT_ANALYTICS },
           loading: false,
           fxRates: null,
           fxAsOf: null,

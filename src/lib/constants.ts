@@ -4,8 +4,16 @@ export const COMMODITY_OPTIONS: { key: CommodityKey; label: string }[] = [
   { key: "gold", label: "Gold" },
   { key: "silver", label: "Silver" },
   { key: "crudeOil", label: "Crude Oil" },
+  { key: "brentCrude", label: "Brent" },
   { key: "naturalGas", label: "Natural Gas" },
   { key: "copper", label: "Copper" },
+  { key: "platinum", label: "Platinum" },
+  { key: "wheat", label: "Wheat" },
+  { key: "rice", label: "Rice" },
+  { key: "corn", label: "Corn" },
+  { key: "soybean", label: "Soybean" },
+  { key: "coffee", label: "Coffee" },
+  { key: "sugar", label: "Sugar" },
 ];
 
 export const TIME_RANGES: TimeRange[] = ["1D", "1W", "1M", "6M", "1Y"];
