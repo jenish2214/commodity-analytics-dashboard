@@ -20,20 +20,23 @@ export const TIME_RANGES: TimeRange[] = ["1D", "1W", "1M", "6M", "1Y"];
 
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/commodities", label: "Commodities", icon: "BarChart2" },
+  { href: "/commodities", label: "Markets", icon: "LineChart" },
   { href: "/portfolio", label: "Portfolio", icon: "Briefcase" },
-  { href: "/market-news", label: "Market News", icon: "Newspaper" },
-  { href: "/indices", label: "Market Indices", icon: "TrendingUp" },
+  { href: "/analytics", label: "Analytics", icon: "BarChart3" },
+  { href: "/risk", label: "Risk Analysis", icon: "Shield" },
+  { href: "/ai-insights", label: "AI Insights", icon: "Sparkles" },
+  { href: "/settings", label: "Settings", icon: "Settings" },
 ];
 
-export const BOTTOM_NAV_ITEMS = [
-  { href: "/logout", label: "Logout", icon: "LogOut", bottom: true }
+/** Sidebar footer (e.g. sign out). */
+export const SIDEBAR_FOOTER_LINKS = [
+  { href: "/logout", label: "Logout", icon: "LogOut" },
 ];
 
 export const BOTTOM_NAV: { href: string; label: string }[] = [
   { href: "/", label: "Home" },
   { href: "/commodities", label: "Markets" },
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/indices", label: "Indices" },
+  { href: "/analytics", label: "Analytics" },
   { href: "/settings", label: "More" },
 ];

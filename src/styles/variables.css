@@ -1,0 +1,55 @@
+/**
+ * Premium fintech design tokens — commodities analytics terminal.
+ * Spacing: 4 · 8 · 16 · 24 · 32 px
+ */
+
+:root {
+  /* Brand */
+  --color-navy-900: #0b1f33;
+  --color-canvas: #f5f7fa;
+  --color-card: #ffffff;
+  --color-text: #0b1f33;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-positive: #00c853;
+  --color-negative: #ff3b30;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+
+  /* Radius / shadow (premium UI) */
+  --radius-lg: 12px;
+  --shadow-premium: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-premium-hover: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* Chrome (sidebar / topbar) — light text on navy */
+  --chrome-bg: #0b1f33;
+  --chrome-text: #e8edf3;
+  --chrome-muted: #94a3b8;
+  --chrome-border: rgba(255, 255, 255, 0.08);
+  --chrome-hover: rgba(255, 255, 255, 0.06);
+  --chrome-active-bg: rgba(0, 200, 83, 0.12);
+  --chrome-active-border: #00c853;
+}
+
+/* Intelligence workspace — dark trading terminal */
+:root {
+  --ws-bg: #0b1220;
+  --ws-panel: #111827;
+  --ws-card: #1f2937;
+  --ws-text: #e5e7eb;
+  --ws-muted: #9ca3af;
+  --ws-accent: #3b82f6;
+  --ws-gain: #22c55e;
+  --ws-loss: #ef4444;
+  --ws-border: rgba(255, 255, 255, 0.06);
+  --ws-glass: rgba(17, 24, 39, 0.65);
+  --ws-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --ws-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --ws-radius: 12px;
+  --ws-motion: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}

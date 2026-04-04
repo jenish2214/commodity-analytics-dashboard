@@ -1,0 +1,151 @@
+/**
+ * App motion — opacity + transform only (compositor-friendly).
+ * Respects prefers-reduced-motion via animations.css global rules.
+ */
+
+@keyframes ca-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ca-hero-line {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ca-rail-in {
+  from {
+    opacity: 0;
+    transform: translate3d(14px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Dashboard hero copy */
+.ca-dashboard-hero.ca-motion-hero .ca-page__title {
+  animation: ca-hero-line 0.58s var(--ease-out-expo) both;
+}
+
+.ca-dashboard-hero.ca-motion-hero .ca-page__lead {
+  animation: ca-hero-line 0.58s var(--ease-out-expo) 0.07s both;
+}
+
+/* KPI strip cards inside dashboard */
+.kpi-strip > .kpi-card {
+  animation: ca-rise 0.52s var(--ease-out-expo) both;
+}
+
+.kpi-strip > .kpi-card:nth-child(1) {
+  animation-delay: 0.03s;
+}
+
+.kpi-strip > .kpi-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.kpi-strip > .kpi-card:nth-child(3) {
+  animation-delay: 0.13s;
+}
+
+.kpi-strip > .kpi-card:nth-child(4) {
+  animation-delay: 0.18s;
+}
+
+.kpi-strip > .kpi-card:nth-child(5) {
+  animation-delay: 0.22s;
+}
+
+/* Main terminal sections stagger */
+.terminal-pro > section {
+  animation: ca-rise 0.5s var(--ease-out-expo) both;
+}
+
+.terminal-pro > section:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.terminal-pro > section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.terminal-pro > section:nth-child(3) {
+  animation-delay: 0.14s;
+}
+
+.terminal-pro > section:nth-child(4) {
+  animation-delay: 0.18s;
+}
+
+.terminal-pro > section:nth-child(5) {
+  animation-delay: 0.22s;
+}
+
+.terminal-pro > section:nth-child(6) {
+  animation-delay: 0.26s;
+}
+
+.terminal-pro > section:nth-child(7) {
+  animation-delay: 0.3s;
+}
+
+.terminal-pro > .ca-card,
+.terminal-pro > .terminal-pro__grid2 {
+  animation: ca-rise 0.5s var(--ease-out-expo) both;
+}
+
+.terminal-pro > .ca-card:nth-of-type(1) {
+  animation-delay: 0.08s;
+}
+
+.terminal-pro > .terminal-pro__grid2:nth-of-type(1) {
+  animation-delay: 0.1s;
+}
+
+.terminal-pro > .terminal-pro__grid2:nth-of-type(2) {
+  animation-delay: 0.14s;
+}
+
+.terminal-pro > .terminal-pro__grid2:nth-of-type(3) {
+  animation-delay: 0.18s;
+}
+
+.terminal-pro > .terminal-pro__grid2:nth-of-type(4) {
+  animation-delay: 0.22s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ca-dashboard-hero.ca-motion-hero .ca-page__title,
+  .ca-dashboard-hero.ca-motion-hero .ca-page__lead,
+  .kpi-strip > .kpi-card,
+  .terminal-pro > section,
+  .terminal-pro > .ca-card,
+  .terminal-pro > .terminal-pro__grid2,
+  .ca-terminal-aside {
+    animation: none !important;
+  }
+
+  .ca-card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-card) !important;
+  }
+
+  .ca-icon-btn:active,
+  .ca-bottom-nav a:active {
+    transform: none !important;
+  }
+}

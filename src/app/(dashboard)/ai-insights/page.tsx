@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { AIInsightsView } from "@/components/views/AIInsightsView";
 
-/** Legacy path; AI Insights hub was removed. */
 export default function AiInsightsPage() {
-  redirect("/");
+  return <AIInsightsView />;
 }

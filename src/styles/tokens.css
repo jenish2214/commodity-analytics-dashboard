@@ -17,6 +17,8 @@
   --radius-card: 12px;
   --space-card: 20px;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 14px 42px rgba(0, 0, 0, 0.1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --bg-hover: #ebebeb;
   --accent-subtle: rgba(0, 0, 0, 0.06);
   --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent);
@@ -45,6 +47,8 @@
   --gain: #16a34a;
   --loss: #dc2626;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --bg-hover: #1a1a1a;
   --accent-subtle: rgba(255, 255, 255, 0.08);
   --focus-ring: 0 0 0 2px var(--bg-primary), 0 0 0 4px rgba(255, 255, 255, 0.45);
@@ -60,6 +64,78 @@
   --color-label: var(--text-secondary);
 }
 
+/* Premium terminal: light canvas, navy chrome (sidebar + topbar) */
+[data-theme="fintech"] {
+  --bg-primary: var(--color-canvas);
+  --bg-secondary: var(--chrome-bg);
+  --bg-card: var(--color-card);
+  --border: var(--color-border);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-muted);
+  --accent: var(--color-navy-900);
+  --accent-hover: #153a5c;
+  --gain: var(--color-positive);
+  --loss: var(--color-negative);
+  --font-sans: "Poppins", var(--font-poppins), system-ui, sans-serif;
+  --sidebar-width: auto;
+  --topbar-height: 64px;
+  --radius-card: var(--radius-lg);
+  --space-card: 20px;
+  --shadow-card: var(--shadow-premium);
+  --shadow-card-hover: var(--shadow-premium-hover);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --bg-hover: #eef1f5;
+  --accent-subtle: rgba(11, 31, 51, 0.06);
+  --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px rgba(0, 200, 83, 0.35);
+
+  --color-primary: var(--color-text);
+  --color-secondary: var(--color-card);
+  --color-accent: var(--color-navy-900);
+  --color-negative: var(--loss);
+  --color-bg: var(--color-canvas);
+  --color-border: var(--color-border);
+  --color-heading: var(--color-text);
+  --color-body: var(--color-text-muted);
+  --color-label: var(--color-text-muted);
+}
+
+/**
+ * Modern intelligence workspace — TradingView / Linear-adjacent dark terminal
+ */
+[data-theme="workspace"] {
+  --bg-primary: var(--ws-bg);
+  --bg-secondary: var(--ws-panel);
+  --bg-card: var(--ws-card);
+  --border: var(--ws-border);
+  --text-primary: var(--ws-text);
+  --text-secondary: var(--ws-muted);
+  --accent: var(--ws-accent);
+  --accent-hover: #60a5fa;
+  --gain: var(--ws-gain);
+  --loss: var(--ws-loss);
+  --font-sans: "Poppins", var(--font-poppins), system-ui, sans-serif;
+  --sidebar-width: 56px;
+  --topbar-height: 52px;
+  --radius-card: var(--ws-radius);
+  --space-card: 18px;
+  --shadow-card: var(--ws-shadow);
+  --shadow-card-hover: var(--ws-shadow-hover);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --accent-subtle: rgba(59, 130, 246, 0.12);
+  --focus-ring: 0 0 0 2px var(--ws-bg), 0 0 0 4px rgba(59, 130, 246, 0.45);
+
+  --color-primary: var(--ws-text);
+  --color-secondary: var(--ws-card);
+  --color-accent: var(--ws-accent);
+  --color-negative: var(--ws-loss);
+  --color-bg: var(--ws-panel);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-heading: var(--ws-text);
+  --color-body: var(--ws-muted);
+  --color-label: var(--ws-muted);
+}
+
 [data-theme="navy"] {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
@@ -72,6 +148,8 @@
   --gain: #16a34a;
   --loss: #dc2626;
   --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 16px 44px rgba(0, 0, 0, 0.5);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --bg-hover: #273549;
   --accent-subtle: rgba(59, 130, 246, 0.15);
   --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent);

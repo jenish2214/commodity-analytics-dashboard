@@ -1,4 +1,7 @@
+@import "./variables.css";
 @import "./tokens.css";
+@import "./animations.css";
+@import "./motion.css";
 
 *,
 *::before,
@@ -24,7 +27,8 @@
 }
 
 html {
-  transition: all 0.3s ease;
+  transition: color 0.28s var(--ease-out-expo, ease-out),
+    background-color 0.28s var(--ease-out-expo, ease-out);
 }
 
 html,
@@ -39,7 +43,8 @@ body {
   font-weight: 400;
   color: var(--text-secondary);
   background: var(--bg-primary);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s var(--ease-out-expo, ease-out),
+    color 0.3s var(--ease-out-expo, ease-out);
 }
 
 /* Custom scrollbar styling */
@@ -58,16 +63,6 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
-}
-
-/* Pulse animation for live indicator */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 
 h1,
@@ -121,16 +116,6 @@ img {
 :focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* Compact density (Settings → Display) */

@@ -22,7 +22,7 @@ export function CommoditiesView() {
       <p className="ca-page__lead">
         Track pricing, liquidity, and directional signals across major contracts.
       </p>
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="ca-view-stack">
         <IndianCommodityPanel />
         <ChartCard title="Commodity Price Chart" />
         <CommodityTable rows={rows} />

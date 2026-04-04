@@ -354,7 +354,27 @@ function AppearanceTab() {
   const { theme, accentColorId, fontSize, compactMode, currency, setTheme, setAccentColor, setFontSize, setCompactMode, setCurrency } =
     useUserStore();
 
-  const themeOptions: { id: "dark" | "light" | "navy"; label: string; bg: string; fg: string; border: string }[] = [
+  const themeOptions: {
+    id: "workspace" | "fintech" | "dark" | "light" | "navy";
+    label: string;
+    bg: string;
+    fg: string;
+    border: string;
+  }[] = [
+    {
+      id: "workspace",
+      label: "Intelligence",
+      bg: "#0b1220",
+      fg: "#e5e7eb",
+      border: "#3b82f6",
+    },
+    {
+      id: "fintech",
+      label: "Terminal",
+      bg: "#0b1f33",
+      fg: "#e8edf3",
+      border: "#00c853",
+    },
     { id: "dark", label: "Dark", bg: "#0f172a", fg: "#f8fafc", border: "#334155" },
     { id: "light", label: "Light", bg: "#f8fafc", fg: "#0f172a", border: "#cbd5e1" },
     { id: "navy", label: "Navy", bg: "#0a1628", fg: "#e2e8f0", border: "#3b82f6" },

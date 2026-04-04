@@ -3,20 +3,19 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BarChart2,
   Briefcase,
   CircleDollarSign,
-  FileText,
-  HelpCircle,
   LayoutDashboard,
+  LineChart,
   LogOut,
   PanelLeft,
   PanelLeftClose,
-  Newspaper,
-  Building,
-  TrendingUp,
+  BarChart3,
+  Shield,
+  Sparkles,
+  Settings,
 } from "lucide-react";
-import { NAV_ITEMS, BOTTOM_NAV_ITEMS } from "@/lib/constants";
+import { NAV_ITEMS, SIDEBAR_FOOTER_LINKS } from "@/lib/constants";
 import { useUserStore } from "@/store/userStore";
 
 function pathActive(pathname: string, href: string) {
@@ -27,26 +26,28 @@ function pathActive(pathname: string, href: string) {
 function getIcon(iconName: string) {
   const icons: Record<string, typeof LayoutDashboard> = {
     LayoutDashboard,
-    BarChart2,
+    LineChart,
     Briefcase,
-    Newspaper,
-    FileText,
-    Building,
-    TrendingUp,
-    HelpCircle,
+    BarChart3,
+    Shield,
+    Sparkles,
+    Settings,
     LogOut,
   };
-  return icons[iconName] || LayoutDashboard;
+  return icons[iconName] ?? LayoutDashboard;
 }
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const theme = useUserStore((s) => s.theme);
   const sidebarOpen = useUserStore((s) => s.sidebarOpen);
   const toggleSidebar = useUserStore((s) => s.toggleSidebar);
   const setSidebarOpen = useUserStore((s) => s.setSidebarOpen);
   const name = useUserStore((s) => s.name);
   const email = useUserStore((s) => s.email);
+
+  const isDock = theme === "workspace";
 
   const initials = name
     .split(" ")
@@ -64,21 +65,20 @@ export function Sidebar() {
   return (
     <>
       <aside
-        className="ca-sidebar"
+        className={`ca-sidebar${isDock ? " ca-sidebar--dock" : ""}`}
         data-open={sidebarOpen ? "true" : "false"}
         aria-label="Sidebar navigation"
       >
-        {/* Logo + Collapse Button */}
         <div className="ca-sidebar__head">
-          {sidebarOpen ? (
+          {sidebarOpen && !isDock ? (
             <div className="ca-sidebar__logo">
               <div className="ca-sidebar__logo-icon" aria-hidden>
                 <CircleDollarSign size={18} strokeWidth={2.25} />
               </div>
-              <span className="ca-sidebar__logo-text">Metals.dev</span>
+              <span className="ca-sidebar__logo-text">CommodityX</span>
             </div>
           ) : (
-            <div className="ca-sidebar__logo-icon" aria-hidden style={{ margin: "0 auto" }}>
+            <div className="ca-sidebar__logo-icon" aria-hidden>
               <CircleDollarSign size={18} strokeWidth={2.25} />
             </div>
           )}
@@ -92,7 +92,6 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* Navigation Items */}
         <nav className="ca-nav" aria-label="Primary">
           {NAV_ITEMS.map((item) => {
             const active = pathActive(pathname, item.href);
@@ -105,17 +104,23 @@ export function Sidebar() {
                   className={`ca-nav__link ${active ? "ca-nav__link--active" : ""}`}
                   onClick={closeOnNavigate}
                 >
-                  <Icon size={18} strokeWidth={2} aria-hidden />
-                  {sidebarOpen && <span>{item.label}</span>}
+                  <Icon size={20} strokeWidth={1.85} aria-hidden />
+                  {isDock ? (
+                    <>
+                      <span className="ca-nav__dock-flyout">{item.label}</span>
+                      <span className="ca-nav__dock-mobile-text">{item.label}</span>
+                    </>
+                  ) : (
+                    sidebarOpen && <span>{item.label}</span>
+                  )}
                 </Link>
               </div>
             );
           })}
         </nav>
 
-        {/* Bottom Items */}
         <div className="ca-nav__bottom">
-          {BOTTOM_NAV_ITEMS.map((item) => {
+          {SIDEBAR_FOOTER_LINKS.map((item) => {
             const active = pathActive(pathname, item.href);
             const Icon = getIcon(item.icon);
 
@@ -124,29 +129,36 @@ export function Sidebar() {
                 <Link
                   href={item.href}
                   className={`ca-nav__link ca-nav__link--bottom ${active ? "ca-nav__link--active" : ""} ${item.href === "/logout" ? "ca-nav__link--logout" : ""}`}
+                  onClick={closeOnNavigate}
                 >
-                  <Icon size={18} strokeWidth={2} aria-hidden />
-                  {sidebarOpen && <span>{item.label}</span>}
+                  <Icon size={20} strokeWidth={1.85} aria-hidden />
+                  {isDock ? (
+                    <>
+                      <span className="ca-nav__dock-flyout">{item.label}</span>
+                      <span className="ca-nav__dock-mobile-text">{item.label}</span>
+                    </>
+                  ) : (
+                    sidebarOpen && <span>{item.label}</span>
+                  )}
                 </Link>
               </div>
             );
           })}
         </div>
 
-        {/* User Profile */}
         <button
           className="ca-sidebar__user"
+          type="button"
           onClick={() => router.push("/settings")}
         >
-          <div className="ca-sidebar__avatar">
-            {initials}
-          </div>
-          {sidebarOpen && (
+          <div className="ca-sidebar__avatar">{initials}</div>
+          {sidebarOpen && !isDock ? (
             <div className="ca-sidebar__user-text">
               <div className="ca-sidebar__user-name">{name}</div>
               <div className="ca-sidebar__user-email">{email}</div>
             </div>
-          )}
+          ) : null}
+          {isDock ? <span className="ca-nav__dock-flyout">Profile</span> : null}
         </button>
       </aside>
     </>

@@ -99,7 +99,7 @@ function currencySymbolFor(code: CurrencyCode): string {
   return CURRENCY_SYMBOL[code];
 }
 
-function applyThemeToDom(theme: "light" | "dark" | "navy"): void {
+function applyThemeToDom(theme: "light" | "dark" | "navy" | "fintech" | "workspace"): void {
   if (typeof document === "undefined") return;
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem("dashboard_theme", theme); } catch { /* */ }
@@ -122,7 +122,7 @@ function applyCompactMode(on: boolean): void {
 }
 
 function syncAuxiliaryStorage(state: {
-  theme: "light" | "dark" | "navy";
+  theme: "light" | "dark" | "navy" | "fintech" | "workspace";
   currency: CurrencyCode;
   name: string;
   email: string;
@@ -156,7 +156,7 @@ type UserPersistState = {
   timezone: Timezone;
   language: LanguageCode;
   // App
-  theme: "light" | "dark" | "navy";
+  theme: "light" | "dark" | "navy" | "fintech" | "workspace";
   accentColorId: AccentColorId;
   fontSize: FontSizeOption;
   compactMode: boolean;
@@ -183,7 +183,7 @@ type UserActions = {
   setTimezone: (tz: Timezone) => void;
   setLanguage: (lang: LanguageCode) => void;
   // Appearance
-  setTheme: (theme: "light" | "dark" | "navy") => void;
+  setTheme: (theme: "light" | "dark" | "navy" | "fintech" | "workspace") => void;
   setAccentColor: (id: AccentColorId) => void;
   setFontSize: (size: FontSizeOption) => void;
   setCompactMode: (on: boolean) => void;
@@ -227,7 +227,7 @@ const defaultState: UserPersistState = {
   avatar: null,
   timezone: "America/New_York",
   language: "en",
-  theme: "dark",
+  theme: "workspace",
   accentColorId: "emerald",
   fontSize: "md",
   compactMode: false,

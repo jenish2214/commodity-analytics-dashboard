@@ -3,7 +3,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { AllocationSlice } from "@/types/models";
 
-const COLORS = ["#0b1f33", "#1db954", "#334155", "#64748b"];
+const COLORS = ["#0b1f33", "#00c853", "#6b7280", "#e5e7eb"];
 
 type Props = {
   data: AllocationSlice[];

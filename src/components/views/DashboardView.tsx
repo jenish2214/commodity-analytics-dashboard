@@ -1,72 +1,45 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
+import { KPIGrid } from "@/components/dashboard/KPIGrid";
+import { MarketOverviewCards } from "@/components/dashboard/MarketOverviewCards";
+import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
+import { RiskAnalyticsPanel } from "@/components/dashboard/RiskAnalyticsPanel";
+import { SeasonalityPanel } from "@/components/dashboard/SeasonalityPanel";
+import { SupplyDemandPanel } from "@/components/dashboard/SupplyDemandPanel";
+import { MacroIndicatorsPanel } from "@/components/dashboard/MacroIndicatorsPanel";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { CommodityHeatmap } from "@/components/terminal/CommodityHeatmap";
-import { CommodityMarketBoard } from "@/components/terminal/CommodityMarketBoard";
 import { CorrelationMatrixPanel } from "@/components/terminal/CorrelationMatrixPanel";
 import { AlertDock } from "@/components/terminal/AlertDock";
-import { MarketInsightsPanel } from "@/components/terminal/MarketInsightsPanel";
-import { OpportunityScannerPanel } from "@/components/terminal/OpportunityScannerPanel";
-import { TerminalNewsStrip } from "@/components/terminal/TerminalNewsStrip";
-import { VolatilityStrip } from "@/components/terminal/VolatilityStrip";
-import { StatCard } from "@/components/StatCard";
+import { CommodityTable } from "@/components/CommodityTable";
+import { PortfolioPieChart } from "@/components/PortfolioPieChart";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { usePortfolioStore } from "@/store/portfolioStore";
-import { useUserStore } from "@/store/userStore";
-import {
-  formatCurrencyAmount,
-  formatSignedCurrency,
-} from "@/utils/format";
 
 const ChartCard = dynamic(
   () => import("@/components/ChartCard").then((m) => m.ChartCard),
   {
     ssr: false,
     loading: () => (
-      <div className="ca-card" style={{ padding: "1rem", color: "var(--text-secondary)" }}>
-        Loading chart module…
+      <div className="ca-card ws-panel ws-panel--chart-skel" aria-busy="true">
+        <div className="ca-skeleton" style={{ height: "min(420px, 50vh)" }} />
       </div>
     ),
   }
 );
 
-function bestPerformerSymbol(
-  market: { symbol: string; commodity: string; change24h: number }[]
-): string {
-  if (market.length === 0) return "—";
-  const top = [...market].sort((a, b) => b.change24h - a.change24h)[0];
-  return top.commodity;
+function PanelTitle({ children }: { children: ReactNode }) {
+  return <h2 className="ws-panel-title">{children}</h2>;
 }
 
 export function DashboardView() {
-  const currency = useUserStore((s) => s.currency);
   const market = useMarketDataStore((s) => s.market);
-  const summary = useMarketDataStore((s) => s.summary);
   const commodityAnalytics = useMarketDataStore((s) => s.commodityAnalytics);
   const searchQuery = useMarketDataStore((s) => s.searchQuery);
   const loading = useMarketDataStore((s) => s.loading);
-  const items = usePortfolioStore((s) => s.items);
-
-  const openItems = useMemo(
-    () => items.filter((i) => i.status === "Open"),
-    [items]
-  );
-
-  const { portfolioValue, totalGain } = useMemo(() => {
-    let pv = 0;
-    let tg = 0;
-    for (const i of openItems) {
-      pv += i.currentPrice * i.quantity;
-      tg += (i.currentPrice - i.buyPrice) * i.quantity;
-    }
-    return { portfolioValue: pv, totalGain: tg };
-  }, [openItems]);
-
-  const topCommodity = useMemo(
-    () => bestPerformerSymbol(market),
-    [market]
-  );
+  const allocation = usePortfolioStore((s) => s.allocation);
 
   const rows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -75,14 +48,18 @@ export function DashboardView() {
   }, [market, searchQuery]);
 
   return (
-    <div className="ca-page">
-      <h1 className="ca-page__title">Commodity analytics terminal</h1>
-      <p className="ca-page__lead">
-        Benchmarks, vols, cross-asset correlations, and desk-style layouts — all sourced from the same live commodity API.
-      </p>
+    <div className="ca-page ca-page--wide ws-page">
+      <header className="ca-dashboard-hero ws-page-hero ca-motion-hero">
+        <h1 className="ca-page__title">Intelligence workspace</h1>
+        <p className="ca-page__lead">
+          Modular analytics surface — benchmarks, book context, and risk in one glance. Filters
+          follow the global search.
+        </p>
+      </header>
+
       {loading && market.length === 0 ? (
         <div className="ca-dashboard-skeleton" aria-busy="true" aria-label="Loading market data">
-          <div className="ca-stat-grid">
+          <div className="kpi-stack">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="ca-skeleton ca-skeleton--stat" />
             ))}
@@ -90,51 +67,70 @@ export function DashboardView() {
           <div className="ca-skeleton ca-skeleton--chart" />
         </div>
       ) : (
-        <>
-          <div className="ca-stat-grid" style={{ marginBottom: "1.25rem" }}>
-            <StatCard
-              label="Portfolio Value"
-              value={formatCurrencyAmount(portfolioValue, currency)}
+        <div className="ws-dashboard">
+          <div className="ws-dashboard__main">
+            <section className="ws-hero-grid" aria-label="Portfolio chart and KPIs">
+              <div className="ws-hero-grid__chart ws-panel">
+                <PanelTitle>Performance &amp; price</PanelTitle>
+                <p className="ws-panel-lead">
+                  Live series with desk indicators — brush and tooltips enabled in-panel.
+                </p>
+                <div className="ws-chart-host">
+                  <ChartCard title="Cross-asset chart" />
+                </div>
+              </div>
+              <div className="ws-hero-grid__kpis">
+                <KPIGrid layout="stack" />
+              </div>
+            </section>
+
+            <MarketOverviewCards
+              rows={rows}
+              symbols={["gold", "crudeOil", "silver", "naturalGas"]}
             />
-            <StatCard
-              label="Open Positions"
-              value={String(openItems.length)}
-            />
-            <StatCard
-              label="Total Gain/Loss"
-              value={formatSignedCurrency(totalGain, currency)}
-            />
-            <StatCard
-              label="Top Commodity"
-              value={topCommodity}
-              hint="by 24h change"
-            />
-          </div>
-          <div className="ca-terminal-grid">
-            <div style={{ display: "grid", gap: "1rem", minWidth: 0 }}>
-              <CommodityHeatmap rows={rows} />
-              <OpportunityScannerPanel rows={rows} analytics={commodityAnalytics} />
-              <CommodityMarketBoard rows={rows} />
-              <ChartCard title="Advanced chart workspace" />
-              <VolatilityStrip rows={rows} />
+
+            <section className="ws-analytics-row">
+              <div className="ws-analytics-cell">
+                <CommodityHeatmap rows={rows} />
+              </div>
+              <div className="ws-panel ws-analytics-cell">
+                <PanelTitle>Allocation</PanelTitle>
+                <p className="ws-panel-lead">Sleeve mix from portfolio service.</p>
+                {allocation.length > 0 ? (
+                  <PortfolioPieChart data={allocation} />
+                ) : (
+                  <p className="ws-empty-hint">
+                    Connect holdings to visualize sleeve weights.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <div className="ws-analytics-row ws-analytics-row--tight">
               <CorrelationMatrixPanel />
-              <TerminalNewsStrip />
+              <SeasonalityPanel analytics={commodityAnalytics} />
             </div>
-            <aside
-              style={{
-                display: "grid",
-                gap: "1rem",
-                position: "sticky",
-                top: "0.5rem",
-                alignSelf: "start",
-              }}
-              className="ca-terminal-aside"
-            >
+
+            <div className="ws-analytics-row">
+              <SupplyDemandPanel analytics={commodityAnalytics} />
+              <RiskAnalyticsPanel />
+            </div>
+
+            <CommodityTable rows={rows} variant="watchlist" title="Watchlist" expandable />
+
+            <div className="ws-analytics-row">
               <AlertDock />
-              <MarketInsightsPanel rows={rows} />
-            </aside>
+              <MacroIndicatorsPanel />
+            </div>
           </div>
-        </>
+
+          <aside className="ws-dashboard__rail" aria-label="Insights">
+            <div className="ws-rail-sticky">
+              <AIInsightsPanel rows={rows} />
+              <ActivityFeed />
+            </div>
+          </aside>
+        </div>
       )}
     </div>
   );

@@ -1,8 +1,11 @@
 "use client";
 
-import { Moon, Sun, Search, X } from "lucide-react";
+import Link from "next/link";
+import { Moon, Sun, Search, X, Bell, Command } from "lucide-react";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { useMarketDataStore } from "@/store/marketDataStore";
 import { useUserStore } from "@/store/userStore";
+import { useAlertStore } from "@/store/alertStore";
 import type { CurrencyCode } from "@/types/models";
 import { useState, useEffect, useRef } from "react";
 import { timeAgo } from "@/utils/format";
@@ -51,10 +54,23 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   const currency = useUserStore((s) => s.currency);
   const setTheme = useUserStore((s) => s.setTheme);
   const setCurrency = useUserStore((s) => s.setCurrency);
+  const alertCount = useAlertStore((s) => s.triggered.length);
 
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const initials = name
     .split(" ")
@@ -115,7 +131,8 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
   };
 
   return (
-    <header className="ca-topbar">
+    <header className="ca-topbar ws-topbar">
+      <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
       {onMenuClick ? (
         <button
           type="button"
@@ -132,14 +149,29 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
           </svg>
         </button>
       ) : null}
-      <div className="ca-topbar__search-wrapper" style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-        <label className="ca-topbar__search" style={{ position: 'relative', display: 'block' }}>
+      <Link href="/" className="ca-topbar__brand" aria-label="Dashboard home">
+        <span className="ca-topbar__brand-mark" aria-hidden>
+          CX
+        </span>
+        <span className="ca-topbar__brand-text">CommodityX</span>
+      </Link>
+      <button
+        type="button"
+        className="ca-icon-btn ws-cmd-trigger"
+        aria-label="Open command palette"
+        onClick={() => setCommandOpen(true)}
+      >
+        <Command size={18} strokeWidth={2} aria-hidden />
+      </button>
+      <div className="ca-topbar__search-wrapper ws-spotlight-wrap">
+        <label className="ca-topbar__search ws-spotlight">
           <span className="sr-only">Search commodities and news</span>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <Search size={17} className="ws-spotlight__icon" aria-hidden />
           <input
             ref={searchInputRef}
             type="search"
-            placeholder="Search markets, commodities, news..."
+            className="ws-spotlight__input"
+            placeholder="Search workspace…"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             onBlur={() => {
@@ -147,12 +179,6 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
             }}
             onKeyDown={handleKeyDown}
             autoComplete="off"
-            style={{
-              paddingLeft: '40px',
-              paddingRight: searchQuery ? '40px' : '12px',
-              fontWeight: 500,
-              textTransform: 'capitalize',
-            }}
           />
           {searchQuery && (
             <button
@@ -253,10 +279,10 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
         <button
           type="button"
           className="ca-icon-btn ca-topbar__theme-btn"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          onClick={() => setTheme(theme === "light" ? "workspace" : "light")}
+          aria-label={theme === "light" ? "Switch to intelligence workspace" : "Switch to light mode"}
         >
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
         <div className="ca-market-pill" role="status" title={fxError ?? undefined}>
           <span
@@ -277,16 +303,16 @@ export function TopNavbar({ onMenuClick, menuOpen }: Props) {
             </span>
           ) : null}
         </div>
-        
-        {/* Actions */}
-        <button type="button" className="ca-icon-btn" aria-label="Notifications">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
-            <path
-              fill="currentColor"
-              d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 1 0-12 0v5L4 18h16l-2-2z"
-            />
-          </svg>
-        </button>
+        <Link
+          href="/#desk-alerts"
+          className="ca-icon-btn"
+          aria-label={`Notifications and alerts${alertCount ? `, ${alertCount} fired` : ""}`}
+        >
+          <Bell size={20} strokeWidth={2} aria-hidden />
+          {alertCount > 0 ? (
+            <span className="ca-topbar__badge">{alertCount > 9 ? "9+" : alertCount}</span>
+          ) : null}
+        </Link>
         <div className="ca-avatar" aria-hidden>
           {initials}
         </div>
