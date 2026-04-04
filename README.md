@@ -1,79 +1,105 @@
-# Commodity Analytics Dashboard
+# Commodity Analytics Dashboard (CommodityX)
 
-A **Next.js 14** and **React 18** application for real-time commodity prices, global indices, market news, and **production-style quantitative analytics**. The stack emphasizes **TypeScript**, clear data flow, and reusable **mathematical/statistical** calculations suitable for traders, analysts, and portfolio-focused users.
-
----
-
-## Purpose and features
-
-### What the dashboard does
-
-- **Commodities**: Gold, silver, WTI crude, natural gas, copper (live-style quotes via Yahoo Finance chart API).
-- **Market indices**: Broad coverage of major regional indices.
-- **News**: Aggregated financial headlines from multiple RSS sources.
-- **Charts**: Line, area, and candlestick views with SMA, EMA, RSI, and volume.
-- **AI Insights**: Entry point for **quantitative and hedge-style analytics**—compact summary on `/ai-insights`, full **model suite and charts** on `/quant-calculator`.
-- **Portfolio**: Track holdings and performance locally.
-
-### Who it is for
-
-- Traders and investors monitoring commodities and macro drivers.
-- Analysts who want **transparent, formula-driven** risk and return metrics—not only narrative “signals.”
-- Builders extending **quant models** and UI in a single TypeScript codebase.
+This project is a **web dashboard** for watching **commodity markets** (things like gold, oil, and crops), exploring **charts and analytics**, and keeping a simple **portfolio view** on your screen. It is built to feel like a professional “trading terminal” while staying readable for everyday users.
 
 ---
 
-## AI Insights and quantitative engine
+## Read this first (no technical background needed)
 
-### Design goals (product and engineering)
+### What is this?
 
-- **Model families in one place**: Classical quant (volatility, Sharpe, drawdown), **options greeks / Black–Scholes-style** outputs, **Monte Carlo** paths, **CAPM** and factor-style fields, **VaR** variants (historical, parametric, MC, CVaR, Cornish–Fisher), **stress scenarios**, **hedge-fund-style ratios** (Sortino, Calmar, capture ratios, pain/ulcer indices), **efficient frontier** hints, and tail-risk measures—implemented in a dedicated store and surfaced with **Recharts** where it helps comprehension.
-- **Chart-first explanations**: Users see distributions, comparisons, and allocation views alongside numbers so intuition matches the math.
-- **Interactive workflows**: On **`/ai-insights`**, the **model catalog** (`AiInsightsModelHub`) lists every model with a **formula summary**, **Python reference** (`calculations/*.py`), a **mini bar chart** of key outputs, and a deep link to **`/quant-calculator?tab=…&focus=…`** (for example **Hedge metrics only** via the “Hedge metrics” chip or `focus=hedge`).
-- **Calculation transparency**: Prefer showing inputs, intermediate assumptions, and outputs per model so “black box” behavior is minimized; keep a **single source of truth** in `quantCalculatorStore` for deterministic, testable logic.
-- **Production-minded logic**: Typed interfaces for inputs and metrics, validated allocations (e.g. weights summing to 100%), defensive handling around missing data in APIs, and separated **server routes** vs **client** state.
+Think of it as a **single website** where you can:
 
-### Current implementation (high level)
+- See **what many commodities are doing** at a glance (up, down, or flat).
+- Open **charts** to study price history over different time ranges.
+- Read **market news** and check **global stock indices** when you want wider context.
+- Use **Analytics** and **Risk analysis** pages for deeper views (patterns, relationships, and risk-style summaries)—still based on the same market information as the home screen.
+- Visit **AI insights** for **structured, text-style summaries** tied to live price action (these are **explainable narratives**, not a human advisor and not guaranteed predictions).
+- Adjust **Settings** (appearance, profile fields, and similar preferences) and have many choices **remembered on this device**.
 
-| Area | Location |
-|------|----------|
-| AI Insights page (catalog + compact calculator) | `src/components/views/AiInsightsView.tsx`, `src/components/AiInsightsModelHub.tsx`, `src/components/CompactPortfolioCalculator.tsx` |
-| Model definitions & deep-link helpers | `src/lib/quantModelCatalog.ts` |
-| Full calculator + charts + URL `tab` / `focus` | `src/app/(dashboard)/quant-calculator/page.tsx` |
-| Metrics, formulas (TypeScript) | `src/store/quantCalculatorStore.ts` (`syncMetricsFromInput` refreshes without delay or history noise) |
-| Optional Python numerics (reference / API) | `calculations/` (`portfolio_metrics.py`, `risk_models.py`, `hedge_fund_metrics.py`, …) and `src/app/api/calculate/*` |
-| Legacy narrative “insights” API (if still present) | `src/app/api/ai-insights/route.ts` |
+You **do not** need to install anything to **understand** what the app does; the sections below describe every main area in everyday language. If you only want to **run** it on your own computer, skip to [Running the app on your computer](#running-the-app-on-your-computer).
 
-On **`/quant-calculator`**, users can open deep panels for portfolio inputs, risk profile, and **per-model visualization** (line, bar, area, pie, scatter) aligned with the computed metrics.
+### Who is it for?
+
+- People who follow **commodities** and want a **clear, visual** workspace.
+- Anyone learning how dashboards combine **prices, charts, news, and portfolio ideas** in one place.
+- Teams or individuals who may later connect **real accounts or APIs** (optional keys can extend data sources—see the technical note at the end).
+
+### Important honesty box (please read)
+
+- Numbers and charts come from **public market data and feeds**. They can be **delayed**, **incomplete**, or **unavailable** if a data provider or your network has an issue.
+- Nothing in this app is **personal financial, legal, or tax advice**. Always verify important decisions with a qualified professional.
 
 ---
 
-## Quick start
+## Tour of the app — what each part is for
 
-### Prerequisites
+Use the **sidebar** on larger screens or the **bottom navigation** on phones to move around. The **top bar** includes **search** (it filters lists like commodities on supporting pages), **currency** choice, **light/dark style**, and a **command palette** (keyboard: **Ctrl+K** on Windows or **⌘K** on Mac) to jump to a page quickly.
 
-- Node.js 18+
-- npm (or yarn/pnpm)
+| Where you go | What you see there (in plain words) |
+|--------------|-------------------------------------|
+| **Dashboard** (home) | The main “workspace”: key stats, a performance chart area, commodity table, portfolio pie view, heatmaps, correlation views, risk and AI-style panels, seasonality and macro context, supply/demand style panels, and an activity feed—designed as one glanceable screen. |
+| **Markets** | The **commodities** list and paths into **detail pages per symbol** with history and indicators (such as moving averages and RSI) where enabled. |
+| **Portfolio** | A place to think about **holdings and allocation** (stored locally in your browser unless you extend the app). |
+| **Analytics** | **Seasonality**, **correlations**, **heatmaps**, **macro indicators**, and chart workspace—similar analytics bundle to the terminal, laid out for exploration. |
+| **Risk analysis** | A **risk-first** layout: volatility views, opportunity-style scans, correlations, and **alerts** so you can monitor downside and cross-asset relationships. |
+| **AI insights** | Panels that turn recent **price behavior** into **structured narratives** and market-style commentary—deterministic and tied to the same feed as the rest of the app. |
+| **Settings** | Profile-style fields, **theme** (including a workspace-style look), notifications, and sidebar behavior; Settings uses a **full-width** layout (no side rail) for focus. |
+| **Market news** | Headlines from **RSS-style** sources, with filters where the UI provides them. |
+| **Indices** | **Major regional indices** in one place. |
+| **Trading** | Trading-oriented UI **if enabled** in your build (experimental or demo-style screens may live here). |
 
-### Install and run
+Across many pages you will also see a **ticker-style strip** and **session** information near the top—helpful context for when markets are typically active.
+
+---
+
+## What has been evolving lately (high level)
+
+Recent work in this repository has focused on making the product **easier to navigate** and **richer to read**:
+
+- **New dedicated pages** for **Analytics** and **Risk analysis** so deep views are not buried only on the home dashboard.
+- A **command palette** and refined **top navigation** (search, currency, theme, alerts).
+- **Terminal-style components**: commodity ticker, volatility strip, alert dock, and related panels for a cohesive “desk” experience.
+- **Dashboard modules** such as KPI grids, market overview cards, AI and risk panels, seasonality, supply/demand, macro indicators, heatmaps, and correlation tools.
+- **Design system** updates: shared **colors and motion** tokens, UI building blocks, and layout polish so the app feels consistent on desktop and mobile.
+
+If something on your screen is not listed here, it may be **newer than this document**—the sidebar and command palette always reflect the **live** list of routes.
+
+---
+
+## How information reaches your screen (simple version)
+
+1. The app asks **server routes** (small programs that run with the website) to fetch **commodity quotes**, **chart history**, **news**, **indices**, and related analytics.
+2. Those routes talk to **external providers** (for example public market chart endpoints and news feeds). Results are **cached for a short time** so the app stays fast and does not hammer providers.
+3. Your browser **shows** the latest successful data and **remembers** your personal settings and portfolio-style inputs **on this device**.
+
+Optional **API keys** (in environment variables) can unlock extra providers inside the financial data engine; without keys, many features still work using public endpoints.
+
+---
+
+## Running the app on your computer
+
+Only needed if you are **developing** or **hosting** your own copy.
+
+1. Install **[Node.js](https://nodejs.org/)** (version 18 or newer is a good target).
+2. Open a terminal in the project folder (the folder that contains this `README.md`).
+3. Run:
 
 ```bash
-git clone <repository-url>
-cd Deshbord
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+4. Open the address the terminal prints (usually **http://localhost:3000**).
 
-### Build
+**Build for production** (faster, optimized site):
 
 ```bash
 npm run build
 npm start
 ```
 
-### Lint
+**Check code style** (for contributors):
 
 ```bash
 npm run lint
@@ -81,209 +107,34 @@ npm run lint
 
 ---
 
-## Project structure
+## Your privacy and data on this device
 
-```
-src/
-├── app/                    # Next.js App Router — pages and API routes
-│   ├── api/                # commodities, news, indices, chart, ai-insights, …
-│   └── (dashboard)/        # Dashboard routes (see Pages below)
-├── components/             # Layout, views, charts, AiInsightsModelHub, calculators
-├── lib/                    # quantModelCatalog, constants, helpers
-├── store/                  # Zustand stores (market data, news, quant calculator, …)
-├── types/                  # Shared TypeScript types
-├── styles/                 # globals, tokens, component CSS
-└── utils/                  # Formatting helpers
-```
-
-### Notable API routes
-
-- `api/commodities` — commodity quotes (Yahoo Finance chart endpoint).
-- `api/commodities/chart` — historical series for charting.
-- `api/news` — RSS aggregation.
-- `api/indices` — index quotes.
-- `api/ai-insights` — optional server-generated narrative/signals (if enabled in your branch).
+- **Settings** (theme, name, email display, currency, notifications, sidebar, etc.) are typically saved in **browser storage** (for example `localStorage`) so the app remembers you **on this browser**.
+- **Portfolio** entries are also kept **locally** unless you change the app to sync elsewhere.
+- **Market prices** are not “fake by default”: when the network allows, the app loads **live-style** data; if a request fails, you may see empty states or stale timestamps until the next successful refresh.
 
 ---
 
-## Technical architecture
+## If something looks wrong
 
-### Data flow
-
-```
-External sources (Yahoo Finance, RSS, …)
-        ↓
-Next.js Route Handlers (fetch, cache, revalidate)
-        ↓
-Client components + Zustand (UI state, preferences, quant inputs)
-```
-
-### Stack
-
-- **Framework**: Next.js 14 (App Router), React 18, TypeScript.
-- **State**: Zustand (with persistence where configured).
-- **Charts**: Recharts.
-- **Icons**: lucide-react.
-- **Styling**: CSS custom properties (design tokens), responsive layouts.
-- **Exports**: PDF/CSV-related tooling where included in dependencies (e.g. `pdf-lib` for reports).
-
-### Caching (typical)
-
-- Commodity and index quotes: on the order of minutes (see route `revalidate` values).
-- Chart history: longer cache where appropriate.
-- News: periodic revalidation to balance freshness and rate limits.
+- **Empty charts or tables**: your network may block a provider, or the service may be temporarily down. Wait a few minutes and refresh.
+- **News missing**: some RSS sources rate-limit or change URLs; the implementation may skip broken feeds.
+- **Indices look quiet**: outside of normal market hours, some symbols update less often—this is expected behavior for many free feeds.
 
 ---
 
-## Features (summary)
+## For developers and contributors (short reference)
 
-### Charts
+| Topic | Detail |
+|-------|--------|
+| **Stack** | [Next.js](https://nextjs.org/) 14 (App Router), [React](https://react.dev/) 18, [TypeScript](https://www.typescriptlang.org/), [Zustand](https://github.com/pmndrs/zustand) for state, [Recharts](https://recharts.org/) for charts, [lucide-react](https://lucide.dev/) for icons. |
+| **Main code folders** | `src/app` — pages and API routes · `src/components` — UI and views · `src/store` — client state · `src/lib` — data engine, constants, calculations · `src/styles` — global and component CSS · `src/types` — shared types. |
+| **Example API routes** | `api/commodities`, `api/commodities/chart`, `api/news`, `api/indices`, `api/portfolio`, `api/analytics/correlations`, `api/indian-commodities` (exact set may grow). |
 
-- Line, area, candlestick; indicators: SMA, EMA, RSI, volume.
-- User preferences persisted for indicator choices and ranges.
-
-### News
-
-- Multiple categories and sources; filter by category and source.
-
-### Indices
-
-- Global coverage with refresh aligned to API caching.
-
-### Quant calculator
-
-- Multi-asset allocation, risk profile, and **unified metrics object** combining return, risk, simulation, options sensitivities, VaR families, stress tests, and hedge-style performance ratios—see `QuantitativeMetrics` in `quantCalculatorStore.ts`.
+When contributing, keep changes **focused**, run `npm run lint`, and match existing patterns in the codebase.
 
 ---
 
-## Development guide
+## Summary
 
-### New API route
-
-```typescript
-// src/app/api/example/route.ts
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ ok: true });
-}
-```
-
-### New client component
-
-```typescript
-"use client";
-
-export function Example() {
-  return <div>Example</div>;
-}
-```
-
-### New dashboard page
-
-Add `src/app/(dashboard)/your-route/page.tsx` and register navigation if you use a shared sidebar.
-
----
-
-## Configuration
-
-### Environment
-
-Copy `.env.example` to `.env.local` when provided. Many features work with **public** endpoints only; optional variables can override base URLs (see project `.env.example` if present).
-
-### Local persistence
-
-- **Settings** (theme, profile fields, notifications, sidebar): stored under browser `localStorage` (e.g. `ca_user_settings`).
-- **Portfolio** items: `ca_portfolio` (or as defined in store).
-- **Quant inputs**: may persist via Zustand `persist` in `quantCalculatorStore`—check middleware configuration in the store file.
-
-Market quotes are **not** “demo-only”: commodity routes fetch live** market data from Yahoo when the network allows; failures fall back per route implementation.
-
----
-
-## Deployment
-
-### Vercel
-
-```bash
-npm i -g vercel
-vercel
-```
-
-Set environment variables in the Vercel project dashboard as needed.
-
-### Docker (example)
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
----
-
-## Troubleshooting
-
-- **Charts empty**: Check browser network tab for `/api/commodities/chart` and CORS/network errors; Yahoo responses can fail from some networks—retry after cache window.
-- **News missing**: RSS hosts may block or throttle; verify feeds in `api/news` implementation.
-- **Indices stale**: Expected outside cash session hours for some symbols.
-
----
-
-## Contributing
-
-1. Fork and branch: `git checkout -b feature/your-feature`
-2. Keep changes focused; match existing TypeScript and CSS patterns.
-3. Run `npm run lint` before opening a PR.
-
----
-
-## License
-
-Open source under the [MIT License](LICENSE).
-
----
-
-## Support
-
-- **Bugs**: GitHub Issues.
-- **Features / discussion**: GitHub Discussions.
-
----
-
-## Appendix
-
-### Pages
-
-| Page | Path | Description |
-|------|------|-------------|
-| Dashboard | `/` | Overview, stats, market summary |
-| Commodities | `/commodities` | List and charts |
-| Commodity detail | `/commodities/[symbol]` | History and indicators |
-| Portfolio | `/portfolio` | Holdings and P/L |
-| **AI Insights** | `/ai-insights` | Compact quant entry; link to full calculator |
-| **Quant calculator** | `/quant-calculator` | Full models, charts, exports |
-| Market news | `/market-news` | News feed |
-| Indices | `/indices` | Global indices |
-| Trading | `/trading` | Trading-oriented UI (if enabled) |
-| Settings | `/settings` | Profile, theme, notifications |
-
-### Settings and theme
-
-- Open **Settings** from the **profile avatar** in the sidebar (sidebar may hide on Settings for a full-width layout).
-- **Theme**: Dark/light via Appearance; transitions use shared duration tokens in CSS.
-- **Typography**: Poppins (Google Fonts) applied globally.
-
-### Acknowledgments
-
-- Market data endpoints rely on public Yahoo Finance chart APIs and similar—subject to their terms and availability.
-- Built with Next.js, React, Zustand, Recharts, and lucide-react.
-
----
-
-**Start with `npm run dev`**, open **AI Insights** for the quant summary, then **Open** the full **Quant calculator** for chart-backed, model-level analytics.
+**CommodityX / Commodity Analytics Dashboard** is a **modern commodity workspace**: prices, charts, news, indices, portfolio context, analytics, risk views, and AI-style narratives—organized so both **curious readers** and **technical users** can get value. Start from the **Dashboard**, use **Markets** for detail, and open **Analytics**, **Risk analysis**, or **AI insights** when you want a deeper story from the same underlying market picture.
